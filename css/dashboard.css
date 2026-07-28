@@ -1,0 +1,328 @@
+/* ─────────────────────────────────────────────────────────
+   Wall Dashboard — design tokens
+   Values are lifted verbatim from the design spec (README.md).
+   ───────────────────────────────────────────────────────── */
+:root {
+  --ground:        #b0603a;  /* terracotta */
+  --card:          #efe9de;
+  --card-off:      #ded7ca;
+  --ink:           #16130f;
+  --on-ink:        #f7efe4;
+  --on-ground:     #f0cdb9;
+  --muted:         #6f6559;
+  --muted-dim:     #8a8072;
+  --hairline:      #cdc2b0;
+  --hairline-warm: #c3b8a6;
+  --hairline-off:  #b6ab99;
+  --warm:          #e08a3c;
+  --cool:          #9ab6cc;
+
+  --sans: 'Space Grotesk', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--ground);
+  /* Kiosk: never scroll, never select, never show a caret. */
+  overflow: hidden;
+  cursor: none;
+}
+
+.root {
+  position: relative;
+  width: 1280px;
+  height: 720px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1.3fr 1.3fr 1fr;
+  grid-template-rows: 286px 178px 1fr;
+  gap: 14px;
+  background: var(--ground);
+  font-family: var(--sans);
+  color: var(--ink);
+  overflow: hidden;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 26px;
+  overflow: hidden;
+}
+
+/* Shared monospace label treatment */
+.mono-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+}
+
+/* ── Clock ────────────────────────────────────────────── */
+.clock {
+  grid-column: 1 / span 2;
+  grid-row: 1;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.clock-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+.clock-timerow { display: flex; align-items: baseline; gap: 16px; }
+.clock-time {
+  font-size: 168px;
+  font-weight: 700;
+  letter-spacing: -0.055em;
+  line-height: 0.78;
+  font-variant-numeric: tabular-nums;
+}
+.clock-seconds {
+  font-family: var(--mono);
+  font-size: 32px;
+  color: var(--ink);
+}
+.clock-date { font-size: 32px; font-weight: 600; margin-top: 14px; }
+
+.bin-chips { display: flex; flex-direction: column; gap: 10px; flex: none; }
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 18px;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.chip-swatch { width: 12px; height: 12px; flex: none; }
+.chip-filled  { background: var(--ink); color: var(--on-ink); }
+.chip-filled  .chip-swatch { background: var(--on-ink); }
+.chip-outline { border: 1.5px solid var(--ink); color: var(--ink); }
+.chip-outline .chip-swatch { background: var(--ink); }
+
+.dayrule { position: relative; height: 13px; }
+.dayrule-track { position: absolute; top: 6px; left: 0; right: 0; height: 1px; background: var(--hairline-warm); }
+.dayrule-fill  { position: absolute; top: 6px; left: 0; height: 1px; background: var(--ink); }
+.dayrule-tick  { position: absolute; top: 0; width: 2px; height: 13px; background: var(--ink); }
+.dayrule-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--muted-dim);
+  margin-top: 6px;
+}
+
+/* ── Departures ───────────────────────────────────────── */
+.departures {
+  grid-column: 1 / span 2;
+  grid-row: 2;
+  padding: 18px 28px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.dep-next { flex: none; }
+.dep-next .mono-label { margin-bottom: 6px; }
+.dep-next-row { display: flex; align-items: baseline; gap: 16px; }
+.dep-next-time {
+  font-size: 80px;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+.dep-next-countdown { font-size: 28px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.dep-comb {
+  height: 11px;
+  border-radius: 3px;
+  margin-top: 12px;
+  background: repeating-linear-gradient(90deg, var(--ink) 0 3px, transparent 3px 9px);
+}
+.dep-later { flex: 1; display: flex; gap: 24px; justify-content: flex-end; }
+.dep-later-item { border-left: 1px solid var(--hairline); padding-left: 24px; }
+.dep-later-time {
+  font-size: 46px;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.dep-later-countdown {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-top: 4px;
+  white-space: nowrap;
+}
+.dep-dim .dep-later-time,
+.dep-dim .dep-later-countdown { color: var(--muted-dim); }
+
+/* ── Light cards ──────────────────────────────────────── */
+.light-card {
+  grid-row: 3;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 26px;
+}
+#light-living  { grid-column: 1; }
+#light-bedroom { grid-column: 2; }
+.light-card.is-off { background: var(--card-off); }
+
+.light-header { display: flex; justify-content: space-between; align-items: center; }
+.light-glyph { height: 66px; display: flex; align-items: center; margin-top: 4px; }
+.light-glyph svg { width: 62px; height: 62px; }
+
+.toggle {
+  width: 74px;
+  height: 42px;
+  border-radius: 21px;
+  display: flex;
+  align-items: center;
+  padding: 3px;
+  flex: none;
+  border: 1.5px solid var(--ink);
+  background: var(--ink);
+  justify-content: flex-end;
+}
+.toggle-knob { width: 35px; height: 35px; border-radius: 50%; background: var(--on-ink); }
+.light-card.is-off .toggle { background: transparent; justify-content: flex-start; }
+.light-card.is-off .toggle-knob { background: var(--hairline-off); }
+
+.light-buttons { display: flex; gap: 10px; }
+.light-btn {
+  flex: 1;
+  height: 62px;
+  border-radius: 16px;
+  border: 1.5px solid var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+.light-btn-temp { gap: 4px; }
+.light-btn svg { width: 23px; height: 23px; display: block; }
+.mono-btn-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+}
+.temp-disc { width: 23px; height: 23px; border-radius: 50%; background: var(--warm); }
+
+/* Touch feedback — 120ms, within the <=150ms budget the spec allows. */
+.light-btn, .toggle, .weather, .forecast-close { transition: opacity 120ms ease; }
+.light-btn:active, .toggle:active, .weather:active, .forecast-close:active { opacity: 0.55; }
+
+/* ── Weather ──────────────────────────────────────────── */
+.weather {
+  position: relative;
+  grid-column: 3;
+  grid-row: 1 / span 3;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.weather-range { font-size: 12px; letter-spacing: 0.14em; flex: none; padding-right: 48px; }
+.weather-condition {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  writing-mode: vertical-rl;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.weather-icon {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 34px 0 0;
+  margin: -6px 0;
+}
+.weather-icon svg { height: 100%; width: auto; max-width: 100%; }
+.weather-bottom { flex: none; }
+.weather-temprow { display: flex; align-items: flex-start; gap: 6px; }
+.weather-temp {
+  font-size: 108px;
+  font-weight: 700;
+  letter-spacing: -0.055em;
+  line-height: 0.82;
+}
+.weather-unit { font-size: 30px; font-weight: 600; margin-top: 8px; }
+.weather-hint { font-size: 11px; letter-spacing: 0.16em; color: var(--muted-dim); margin-top: 8px; }
+
+/* ── Forecast overlay ─────────────────────────────────── */
+.forecast {
+  position: absolute;
+  inset: 0;
+  background: var(--ground);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 5;
+}
+.forecast[hidden] { display: none; }
+.forecast-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 8px;
+}
+.forecast-title {
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--on-ink);
+}
+.forecast-sub {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: var(--on-ground);
+  margin-top: 4px;
+}
+.forecast-close {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.forecast-close svg { width: 28px; height: 28px; }
+.forecast-chart {
+  flex: 1;
+  background: var(--card);
+  border-radius: 26px;
+  padding: 24px 26px;
+  display: flex;
+  gap: 14px;
+  align-items: stretch;
+}
+.fc-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.fc-temp { font-size: 34px; font-weight: 700; letter-spacing: -0.04em; }
+.fc-bar-slot { flex: 1; width: 100%; display: flex; align-items: flex-end; }
+.fc-bar { width: 100%; background: var(--ground); border-radius: 10px 10px 3px 3px; }
+.fc-bar.is-now { background: var(--ink); }
+.fc-col svg { width: 34px; height: 34px; flex: none; }
+.fc-hour { font-family: var(--mono); font-size: 14px; color: var(--muted); }

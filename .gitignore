@@ -1,0 +1,5 @@
+.DS_Store
+
+# Holds the Home Assistant URL + long-lived access token (Step 1).
+# Never commit this — copy config.example.js and fill it in on the Pi.
+js/config.js

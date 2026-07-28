@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>Wall Dashboard</title>
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+<div class="root" id="root">
+
+  <!-- ── Clock ───────────────────────────────────────────── -->
+  <section class="card clock" id="clock-card">
+    <div class="clock-top">
+      <div>
+        <div class="clock-timerow">
+          <div class="clock-time" id="clock-time">20:14</div>
+          <div class="clock-seconds" id="clock-seconds">38</div>
+        </div>
+        <div class="clock-date" id="clock-date">Monday, 27 July</div>
+      </div>
+      <div class="bin-chips" id="bin-chips"></div>
+    </div>
+    <div>
+      <div class="dayrule">
+        <div class="dayrule-track"></div>
+        <div class="dayrule-fill" id="dayrule-fill"></div>
+        <div class="dayrule-tick" id="dayrule-tick"></div>
+      </div>
+      <div class="dayrule-labels">
+        <div>00</div><div>06</div><div>12</div><div>18</div><div>24</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Departures ──────────────────────────────────────── -->
+  <section class="card departures" id="departures-card">
+    <div class="dep-next" id="dep-next">
+      <div class="mono-label">NEXT DEPARTURE</div>
+      <div class="dep-next-row">
+        <div class="dep-next-time" id="dep1-time">20:22</div>
+        <div class="dep-next-countdown" id="dep1-countdown">in 8 min</div>
+      </div>
+      <div class="dep-comb"></div>
+    </div>
+    <div class="dep-later">
+      <div class="dep-later-item" id="dep-2">
+        <div class="dep-later-time" id="dep2-time">20:31</div>
+        <div class="dep-later-countdown" id="dep2-countdown">in 17 min</div>
+      </div>
+      <div class="dep-later-item dep-dim" id="dep-3">
+        <div class="dep-later-time" id="dep3-time">20:44</div>
+        <div class="dep-later-countdown" id="dep3-countdown">in 30 min</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Lights ──────────────────────────────────────────── -->
+  <section class="card light-card" id="light-living" data-room="living">
+    <div class="light-header">
+      <div>
+        <div class="mono-label light-room">LIVING ROOM</div>
+        <div class="light-glyph" data-glyph></div>
+      </div>
+      <div class="toggle" data-action="toggle" role="switch" tabindex="0">
+        <div class="toggle-knob"></div>
+      </div>
+    </div>
+    <div class="light-buttons">
+      <div class="light-btn" data-action="brightness_up">
+        <span data-icon="brighter"></span>
+        <div class="mono-btn-label">BRIGHTER</div>
+      </div>
+      <div class="light-btn" data-action="brightness_down">
+        <span data-icon="dimmer"></span>
+        <div class="mono-btn-label">DIMMER</div>
+      </div>
+      <div class="light-btn light-btn-temp" data-action="color_temp_toggle">
+        <div class="temp-disc" data-temp-disc></div>
+        <div class="mono-btn-label" data-temp-label>WARM</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card light-card" id="light-bedroom" data-room="bedroom">
+    <div class="light-header">
+      <div>
+        <div class="mono-label light-room">BEDROOM</div>
+        <div class="light-glyph" data-glyph></div>
+      </div>
+      <div class="toggle" data-action="toggle" role="switch" tabindex="0">
+        <div class="toggle-knob"></div>
+      </div>
+    </div>
+    <div class="light-buttons">
+      <div class="light-btn" data-action="brightness_up">
+        <span data-icon="brighter"></span>
+        <div class="mono-btn-label">BRIGHTER</div>
+      </div>
+      <div class="light-btn" data-action="brightness_down">
+        <span data-icon="dimmer"></span>
+        <div class="mono-btn-label">DIMMER</div>
+      </div>
+      <div class="light-btn light-btn-temp" data-action="color_temp_toggle">
+        <div class="temp-disc" data-temp-disc></div>
+        <div class="mono-btn-label" data-temp-label>COOL</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Weather ─────────────────────────────────────────── -->
+  <section class="card weather" id="weather-card">
+    <div class="mono-label weather-range" id="weather-range">L. 14° &nbsp; H. 23°</div>
+    <div class="weather-condition" id="weather-condition">Partly cloudy</div>
+    <div class="weather-icon" id="weather-icon"></div>
+    <div class="weather-bottom">
+      <div class="weather-temprow">
+        <div class="weather-temp" id="weather-temp">19</div>
+        <div class="weather-unit">°C</div>
+      </div>
+      <div class="mono-label weather-hint">TAP FOR FORECAST</div>
+    </div>
+  </section>
+
+  <!-- ── Forecast overlay ────────────────────────────────── -->
+  <div class="forecast" id="forecast" hidden>
+    <div class="forecast-header">
+      <div>
+        <div class="forecast-title">Next 8 hours</div>
+        <div class="mono-label forecast-sub" id="forecast-sub">MONDAY 27 JULY · L. 14° H. 23°</div>
+      </div>
+      <div class="forecast-close" id="forecast-close" role="button" tabindex="0"></div>
+    </div>
+    <div class="forecast-chart" id="forecast-chart"></div>
+  </div>
+
+</div>
+
+<script src="js/icons.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
