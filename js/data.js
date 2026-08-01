@@ -114,10 +114,10 @@
     Data.onChange();
   }
 
-  var WARM_BELOW_KELVIN = global.WARM_BELOW_KELVIN;
-  var BLUEPRINT_LOW  = global.BRIGHTNESS_LEVELS.lowMax;
-  var BLUEPRINT_HIGH = global.BRIGHTNESS_LEVELS.medMax;
-  var BLUEPRINT_MID  = global.BRIGHTNESS_LEVELS.mid;
+  var WARM_BELOW_KELVIN  = global.WARM_BELOW_KELVIN;
+  var BLUEPRINT_LOW      = global.BRIGHTNESS_LEVELS.lowMax;
+  var BLUEPRINT_HIGH     = global.BRIGHTNESS_LEVELS.medMax;
+  var SCRIPT_LEVEL       = global.SCRIPT_LEVEL;
 
   var Data = {
 
@@ -208,12 +208,11 @@
       predict(room, { on: !cur.on, level: cur.level, warm: cur.warm });
     },
 
-    /* Mirrors the Hue dimmer blueprint rather than calling
-       bright/dim straight through, because those scripts jump to
-       an absolute brightness (bright is brightness_pct: 100), so
-       calling them alone would skip the middle level entirely.
-       Reproducing the blueprint's branch points keeps the wall
-       panel and the physical remote in step with each other. */
+    /* The bright/dim/mid scripts each jump to an absolute
+       brightness, so which one to call depends on where the light
+       currently sits. The branch points are the dimmer blueprint's
+       (< 40 going up, > 200 going down), which is what keeps the
+       wall panel stepping 1->2->3 in step with the physical remote. */
     stepBrightness: function (room, delta) {
       if (!live()) {
         return mockAction(room, function (l) {
@@ -226,36 +225,21 @@
       var raw = HA.attr(cfg.entity, 'brightness');
       var up = delta > 0;
 
-      // The blueprint defaults differ by direction: brightness|int(0)
+      // The blueprint's defaults differ by direction: brightness|int(0)
       // going up, brightness|int(255) going down. With the light off
-      // that lands both on the mid step, which is deliberate.
+      // that lands both on the middle step, which is deliberate.
       var b = isUnknown(raw) ? (up ? 0 : 255) : Number(raw);
-      var toMid = up ? b < BLUEPRINT_LOW : b > BLUEPRINT_HIGH;
 
-      if (toMid) {
-        // TODO: this reaches past the scripts and drives the light
-        // directly, which breaks the "all light control goes through
-        // HA scripts" rule the rest of this file follows. It only
-        // exists because the stepping logic lives in the dimmer
-        // blueprint rather than in a script. Cleaner fix: add a
-        // script.<room>_mid (or make bright/dim step relatively) and
-        // call that instead, then delete this branch.
-        HA.callService('light', 'turn_on', {
-          entity_id: cfg.entity,
-          brightness: BLUEPRINT_MID
-        });
-        predict(room, { on: true, level: brightnessToLevel(BLUEPRINT_MID),
-                        warm: Data.getLight(room).warm });
-        return;
-      }
+      var step;
+      if (up ? b < BLUEPRINT_LOW : b > BLUEPRINT_HIGH) step = 'mid';
+      else step = up ? 'bright' : 'dim';
 
-      HA.runScript(up ? cfg.scripts.bright : cfg.scripts.dim);
-      if (up) {
-        // bright is brightness_pct: 100, so the outcome is known.
-        predict(room, { on: true, level: 3, warm: Data.getLight(room).warm });
-      }
-      // dim's target value is not known here, so nothing is predicted;
-      // the real state lands over the socket a moment later.
+      HA.runScript(cfg.scripts[step]);
+      predict(room, {
+        on: true,
+        level: SCRIPT_LEVEL[step],
+        warm: Data.getLight(room).warm
+      });
     },
 
     toggleColorTemp: function (room) {

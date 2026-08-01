@@ -17,6 +17,7 @@
         scripts: {
           toggle: 'script.living_room_toggle',
           bright: 'script.living_room_bright',
+          mid:    'script.living_room_mid',
           dim:    'script.living_room_dim',
           temp:   'script.living_room_warm_cool_toggle'
         }
@@ -26,6 +27,7 @@
         scripts: {
           toggle: 'script.bedroom_toggle',
           bright: 'script.bedroom_bright',
+          mid:    'script.bedroom_mid',
           dim:    'script.bedroom_dim',
           temp:   'script.bedroom_warm_cool_toggle'
         }
@@ -82,6 +84,27 @@
      averaged across the group that still lands either side of
      3000, so one threshold covers both rooms. */
   global.WARM_BELOW_KELVIN = 3000;
+
+  /* Which level each brightness script lands on, so a press can
+     render its outcome before the light reports back.
+
+     Deliberately levels rather than brightness values, because the
+     scripts do not agree on a number across rooms:
+       dim     5%                     -> 13         both rooms
+       mid     77%                    -> ~196       bedroom
+       mid     50% no-LED + 77% LED   -> ~142 mean  living room
+       bright  100%                   -> 255        both rooms
+     The levels are identical even though the values are not.
+
+     Constraint worth knowing if these scripts are ever retuned: mid
+     must land strictly between lowMax and medMax. If it crept to
+     >= 200, pressing DIMMER from mid would re-select mid and the
+     level would stick at 2. */
+  global.SCRIPT_LEVEL = {
+    dim:    1,
+    mid:    2,
+    bright: 3
+  };
 
   global.brightnessToLevel = function (brightness) {
     var b = Number(brightness) || 0;
