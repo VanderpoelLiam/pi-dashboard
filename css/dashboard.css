@@ -331,6 +331,16 @@ html, body {
 .fc-bar.is-now { background: var(--ink); }
 .fc-col svg { width: 34px; height: 34px; flex: none; }
 .fc-hour { font-family: var(--mono); font-size: 14px; color: var(--muted); }
+.fc-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.16em;
+  color: var(--muted-dim);
+}
 
 /* ── Connection state chip ────────────────────────────────
    Only rendered when the link to Home Assistant is not

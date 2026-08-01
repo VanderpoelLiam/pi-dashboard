@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weather icon placeholders</title>
+<link rel="stylesheet" href="css/fonts.css">
+<style>
+  :root { --ground:#b0603a; --card:#efe9de; --ink:#16130f; --muted:#6f6559; --on-ink:#f7efe4; }
+  * { box-sizing: border-box; }
+  body {
+    margin:0; padding:40px; background:var(--ground);
+    font-family:'Space Grotesk',sans-serif; color:var(--ink);
+  }
+  h1 { font-size:38px; font-weight:700; letter-spacing:-0.03em; color:var(--on-ink); margin:0 0 6px; }
+  .sub {
+    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.16em;
+    color:#f0cdb9; margin-bottom:28px;
+  }
+  .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  .cell {
+    background:var(--card); border-radius:26px; padding:20px 16px;
+    display:flex; flex-direction:column; align-items:center; gap:12px;
+  }
+  .big { height:96px; display:flex; align-items:center; }
+  .big svg { height:96px; width:auto; }
+  .row { display:flex; align-items:flex-end; gap:14px; }
+  .row svg { width:34px; height:34px; }
+  .name {
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em;
+    color:var(--muted); text-align:center; word-break:break-all;
+  }
+  .label { font-size:17px; font-weight:600; }
+  .tag {
+    font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.14em;
+    padding:3px 8px; border-radius:999px; background:var(--ink); color:var(--on-ink);
+  }
+</style>
+</head>
+<body>
+<h1>Weather icon placeholders</h1>
+<div class="sub">ALL 15 HOME ASSISTANT CONDITIONS · LARGE (CARD) AND SMALL (FORECAST) · NIGHT VARIANTS MARKED</div>
+<div class="grid" id="grid"></div>
+
+<script src="js/icons.js"></script>
+<script>
+  var NIGHT = { partlycloudy: true };
+  document.getElementById('grid').innerHTML = Icons.conditions.map(function (c) {
+    var variants = '<div class="row">' + Icons.weatherSmall(c, false) +
+      (NIGHT[c] ? Icons.weatherSmall(c, true) : '') + '</div>';
+    return '<div class="cell">' +
+      '<div class="big">' + Icons.weatherLarge(c, false) + '</div>' +
+      variants +
+      '<div class="label">' + Icons.conditionLabel(c) + '</div>' +
+      '<div class="name">' + c + '</div>' +
+      (NIGHT[c] ? '<div class="tag">HAS NIGHT FORM</div>' : '') +
+      '</div>';
+  }).join('');
+</script>
+</body>
+</html>

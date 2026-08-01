@@ -114,6 +114,28 @@
     Data.onChange();
   }
 
+  /* ── Forecasts ──────────────────────────────────────────
+     Not entity state, so they arrive by service call rather than
+     over the subscription and have to be polled. MeteoSwiss data
+     does not move faster than this. */
+  var FORECAST_REFRESH_MS = 15 * 60 * 1000;
+  var forecasts = { daily: null, hourly: null };
+  var forecastTimer = null;
+
+  function refreshForecasts() {
+    if (!live()) return;
+
+    HA.getForecasts(ENTITIES.weather, 'daily').then(function (list) {
+      forecasts.daily = list;
+      Data.onChange();
+    })['catch'](function (e) { console.warn('[data] daily forecast failed:', e.message); });
+
+    HA.getForecasts(ENTITIES.weather, 'hourly').then(function (list) {
+      forecasts.hourly = list;
+      Data.onChange();
+    })['catch'](function (e) { console.warn('[data] hourly forecast failed:', e.message); });
+  }
+
   var WARM_BELOW_KELVIN  = global.WARM_BELOW_KELVIN;
   var BLUEPRINT_LOW      = global.BRIGHTNESS_LEVELS.lowMax;
   var BLUEPRINT_HIGH     = global.BRIGHTNESS_LEVELS.medMax;
@@ -195,9 +217,63 @@
     },
 
     /* ── Weather ──────────────────────────────────────────
-       Still mock — Steps 6-8. */
-    getWeather: function () { return mock.weather; },
-    getForecast: function () { return mock.forecast; },
+       Condition and current temperature come off the entity, but
+       the daily high/low and the hourly series are not entity
+       state — they have to be pulled with weather.get_forecasts
+       and are refreshed on a timer (see refreshForecasts). */
+    getWeather: function () {
+      return cached('weather', function () {
+        var st = HA.get(ENTITIES.weather);
+        if (!st) return null;
+
+        var today = forecasts.daily && forecasts.daily[0];
+        return {
+          condition: st.state,
+          conditionLabel: Icons.conditionLabel(st.state),
+          temperature: st.attributes.temperature,
+          low:  today ? Math.round(today.templow) : null,
+          high: today ? Math.round(today.temperature) : null,
+          night: Data.isNightAt(new Date())
+        };
+      }, mock.weather) || null;
+    },
+
+    /* Eight hours starting from the next forecast entry. */
+    getForecast: function () {
+      return cached('forecast', function () {
+        if (!forecasts.hourly) return null;
+
+        return forecasts.hourly.slice(0, 8).map(function (f) {
+          var when = new Date(f.datetime);
+          return {
+            hour: when.getHours(),
+            temp: Math.round(f.temperature),
+            condition: f.condition,
+            night: Data.isNightAt(when)
+          };
+        });
+      }, mock.forecast) || [];
+    },
+
+    /* Night is derived from sun.sun's next rising/setting rather
+       than the bare above/below state, so forecast hours further
+       out get the right day or night icon too. */
+    isNightAt: function (when) {
+      var sun = HA.get && HA.get(ENTITIES.sun);
+      if (!sun) return false;
+
+      var t = when.getTime();
+      var rising  = Date.parse(sun.attributes.next_rising);
+      var setting = Date.parse(sun.attributes.next_setting);
+      if (isNaN(rising) || isNaN(setting)) return sun.state === 'below_horizon';
+
+      // Currently up: night runs from the coming sunset to the
+      // sunrise after it. Currently down: night runs until sunrise,
+      // and picks up again at the following sunset.
+      return sun.state === 'below_horizon'
+        ? (t < rising || t >= setting)
+        : (t >= setting && t < rising);
+    },
 
     /* ── Actions ────────────────────────────────────────── */
     toggleLight: function (room) {
@@ -249,6 +325,14 @@
       HA.runScript(ENTITIES.lights[room].scripts.temp);
       lastWarm[room] = !cur.warm;
       predict(room, { on: cur.on, level: cur.level, warm: !cur.warm });
+    },
+
+    /* Called once the socket is up, and again on every reconnect
+       so a dropped link does not leave the forecast frozen. */
+    startForecastPolling: function () {
+      refreshForecasts();
+      if (forecastTimer) return;
+      forecastTimer = setInterval(refreshForecasts, FORECAST_REFRESH_MS);
     },
 
     onChange: function () {}

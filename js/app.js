@@ -15,6 +15,7 @@
 
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
   function hhmm(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function isUnknown(v) { return v === null || v === undefined || v === ''; }
 
   /* ── Clock ──────────────────────────────────────────── */
   function renderClock() {
@@ -85,20 +86,41 @@
   /* ── Weather ────────────────────────────────────────── */
   function renderWeather() {
     var w = Data.getWeather();
-    $('weather-range').innerHTML = 'L. ' + w.low + '° &nbsp; H. ' + w.high + '°';
+    if (!w) {
+      $('weather-range').innerHTML = 'L. —° &nbsp; H. —°';
+      $('weather-condition').textContent = '';
+      $('weather-temp').textContent = '—';
+      $('weather-icon').innerHTML = '';
+      return;
+    }
+
+    // High/low come from the daily forecast, which lands a moment
+    // after the entity state does.
+    var lo = w.low === null || w.low === undefined ? '—' : w.low;
+    var hi = w.high === null || w.high === undefined ? '—' : w.high;
+
+    $('weather-range').innerHTML = 'L. ' + lo + '° &nbsp; H. ' + hi + '°';
     $('weather-condition').textContent = w.conditionLabel;
-    $('weather-temp').textContent = Math.round(w.temperature);
-    $('weather-icon').innerHTML = Icons.weatherLarge(w.condition);
+    $('weather-temp').textContent = isUnknown(w.temperature) ? '—' : Math.round(w.temperature);
+    $('weather-icon').innerHTML = Icons.weatherLarge(w.condition, w.night);
   }
 
   function renderForecast() {
     var rows = Data.getForecast();
-    var w = Data.getWeather();
+    var w = Data.getWeather() || {};
     var now = new Date();
 
+    var lo = isUnknown(w.low) ? '—' : w.low;
+    var hi = isUnknown(w.high) ? '—' : w.high;
     $('forecast-sub').textContent =
       (DAYS[now.getDay()] + ' ' + now.getDate() + ' ' + MONTHS[now.getMonth()]).toUpperCase() +
-      ' · L. ' + w.low + '° H. ' + w.high + '°';
+      ' · L. ' + lo + '° H. ' + hi + '°';
+
+    if (!rows.length) {
+      $('forecast-chart').innerHTML =
+        '<div class="fc-empty">NO FORECAST DATA</div>';
+      return;
+    }
 
     // Bar height is each hour's share of the range across the window,
     // floored so the coldest hour still reads as a bar.
@@ -113,7 +135,7 @@
         '<div class="fc-temp">' + r.temp + '°</div>' +
         '<div class="fc-bar-slot"><div class="fc-bar' + (i === 0 ? ' is-now' : '') +
         '" style="height:' + height.toFixed(1) + '%"></div></div>' +
-        Icons.weatherSmall(r.condition) +
+        Icons.weatherSmall(r.condition, r.night) +
         '<div class="fc-hour">' + pad(r.hour) + ':00</div>' +
         '</div>';
     }).join('');
@@ -197,7 +219,12 @@
     setInterval(tick, 1000);
 
     if (global.HA) {
-      HA.onStatus(renderConnection);
+      HA.onStatus(function (state) {
+        renderConnection(state);
+        // Forecasts are polled, not pushed, so they need kicking off
+        // on connect and again after any reconnect.
+        if (state === 'connected') Data.startForecastPolling();
+      });
       HA.onUpdate(function () { if (Data.isLive) renderAll(); });
       HA.connect();
     }
