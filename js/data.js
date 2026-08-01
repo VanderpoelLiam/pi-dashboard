@@ -19,7 +19,13 @@
 
   function inMinutes(m) { return new Date(Date.now() + m * 60000); }
 
-  /* ── Mock fallbacks ─────────────────────────────────── */
+  /* Mock data is opt-in via ?demo=1, for working on the design
+     without a Home Assistant connection. It is never shown by
+     accident: a dashboard that invents plausible bus times when
+     it cannot reach HA is worse than one that visibly has none. */
+  var DEMO = /[?&]demo=1\b/.test(global.location.search);
+
+  /* ── Mock fallbacks (demo mode only) ────────────────── */
   var mock = {
     lights: {
       living:  { on: true, level: 3, warm: true },
@@ -55,13 +61,14 @@
      the connection chip already flags that the link is down. */
   var lastLive = {};
 
-  function cached(key, read) {
+  function cached(key, read, demoValue) {
     if (live()) {
       var value = read();
       lastLive[key] = value;
       return value;
     }
-    return key in lastLive ? lastLive[key] : null;
+    if (key in lastLive) return lastLive[key];   // stale, but real
+    return DEMO ? demoValue : null;              // nothing real ever seen
   }
 
   var Data = {
@@ -82,7 +89,7 @@
           var d = new Date(s);
           return isNaN(d.getTime()) ? null : d;
         });
-      }) || mock.departures;
+      }, mock.departures) || [null, null, null];
     },
 
     /* ── Waste chips ──────────────────────────────────────
@@ -105,7 +112,7 @@
           out.push({ key: key, label: cfg.label, days: days });
         });
         return out;
-      }) || mock.wasteChips;
+      }, mock.wasteChips) || [];
     },
 
     /* ── Lights ───────────────────────────────────────────
