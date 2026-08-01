@@ -27,10 +27,15 @@ html, body {
   margin: 0;
   padding: 0;
   background: var(--ground);
-  /* Kiosk: never scroll, never select, never show a caret. */
   overflow: hidden;
-  cursor: none;
 }
+
+/* Deliberately no `cursor: none` here. Hiding the pointer is a
+   display concern, not a page concern, and doing it in CSS makes
+   the dashboard unpleasant to work on with a mouse. On the Pi it
+   is handled at the OS level with unclutter, which also covers
+   the pointer sitting over the desktop before Chromium loads
+   (--kiosk does not hide it on its own). See Step 9. */
 
 .root {
   position: relative;
