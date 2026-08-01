@@ -326,3 +326,35 @@ html, body {
 .fc-bar.is-now { background: var(--ink); }
 .fc-col svg { width: 34px; height: 34px; flex: none; }
 .fc-hour { font-family: var(--mono); font-size: 14px; color: var(--muted); }
+
+/* ── Connection state chip ────────────────────────────────
+   Only rendered when the link to Home Assistant is not
+   healthy. Sits over the bottom-left card corner so it is
+   legible from across the room. */
+.conn-chip {
+  position: absolute;
+  left: 22px;
+  bottom: 22px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+}
+.conn-chip[hidden] { display: none; }
+.conn-chip::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--warm);
+  flex: none;
+}
+.conn-chip.is-fatal::before { background: #d9564a; }

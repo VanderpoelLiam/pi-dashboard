@@ -136,9 +136,17 @@
     <div class="forecast-chart" id="forecast-chart"></div>
   </div>
 
+  <!-- Connection state. Hidden while healthy; the wall display must
+       never present stale data as if it were live. -->
+  <div class="conn-chip" id="conn-chip" hidden></div>
+
 </div>
 
 <script src="js/icons.js"></script>
+<script src="js/entities.js"></script>
+<!-- Gitignored; copy from config.example.js. A 404 here is handled. -->
+<script src="js/config.js"></script>
+<script src="js/ha.js"></script>
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>
 </body>

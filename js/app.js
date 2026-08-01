@@ -162,6 +162,26 @@
     });
   }
 
+  /* ── Connection state ───────────────────────────────────
+     Step 1 wires the socket up and surfaces its health; the
+     cards still render from mock data until each one is
+     migrated in its own step. */
+  var CONN_COPY = {
+    connecting:   'CONNECTING',
+    disconnected: 'NO CONNECTION',
+    auth_failed:  'AUTH FAILED',
+    unconfigured: 'NO CONFIG'
+  };
+
+  function renderConnection(state) {
+    var chip = $('conn-chip');
+    if (!chip) return;
+    var copy = CONN_COPY[state];
+    chip.hidden = !copy;                    // hidden while connected
+    if (copy) chip.textContent = copy;
+    chip.classList.toggle('is-fatal', state === 'auth_failed' || state === 'unconfigured');
+  }
+
   /* ── Boot ───────────────────────────────────────────── */
   function renderAll() {
     renderClock();
@@ -183,6 +203,12 @@
     Data.onChange = renderAll;
     renderAll();
     setInterval(tick, 1000);
+
+    if (global.HA) {
+      HA.onStatus(renderConnection);
+      HA.onUpdate(function () { if (Data.isLive) renderAll(); });
+      HA.connect();
+    }
   }
 
   document.addEventListener('DOMContentLoaded', init);
