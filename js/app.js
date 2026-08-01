@@ -20,7 +20,6 @@
   function renderClock() {
     var now = new Date();
     $('clock-time').textContent = hhmm(now);
-    $('clock-seconds').textContent = pad(now.getSeconds());
     $('clock-date').textContent =
       DAYS[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS[now.getMonth()];
 
@@ -31,29 +30,22 @@
   }
 
   /* ── Bin chips ──────────────────────────────────────────
-     Shown only when collection is within the threshold; copy
-     is relative. Threshold is 2 days per the design spec. */
-  var WASTE_THRESHOLD_DAYS = 2;
+     Data decides which chips are due; this only renders them.
+     Paper reads as the filled chip, cardboard as the outlined one. */
+  var CHIP_STYLE = { paper: 'chip chip-filled', cardboard: 'chip chip-outline' };
 
   function relativeDay(days) {
-    if (days === 0) return 'today';
+    if (days <= 0) return 'today';
     if (days === 1) return 'tomorrow';
     return 'in ' + days + ' days';
   }
 
   function renderBins() {
-    var waste = Data.getWaste();
-    var host = $('bin-chips');
-    var html = '';
-    ['paper', 'cardboard'].forEach(function (key, i) {
-      var w = waste[key];
-      if (!w || w.days === null || w.days > WASTE_THRESHOLD_DAYS) return;
-      // Paper reads as the filled chip, cardboard as the outlined one.
-      var cls = i === 0 ? 'chip chip-filled' : 'chip chip-outline';
-      html += '<div class="' + cls + '"><div class="chip-swatch"></div>' +
-              w.label + ' ' + relativeDay(w.days) + '</div>';
-    });
-    host.innerHTML = html;
+    $('bin-chips').innerHTML = Data.getWasteChips().map(function (chip) {
+      return '<div class="' + (CHIP_STYLE[chip.key] || 'chip chip-outline') + '">' +
+             '<div class="chip-swatch"></div>' +
+             chip.label + ' ' + relativeDay(chip.days) + '</div>';
+    }).join('');
   }
 
   /* ── Departures ─────────────────────────────────────── */

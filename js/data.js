@@ -1,35 +1,35 @@
 /* ─────────────────────────────────────────────────────────
    data.js — the seam between the UI and Home Assistant.
 
-   Step 0 serves mock data shaped exactly like what the HA
-   layer will eventually produce. When the WebSocket client
-   lands (Step 1), only this file is replaced; nothing in
-   app.js needs to change.
+   Every getter returns live HA data when the socket is up and
+   falls back to mock data otherwise, so the page still renders
+   something sane before the first snapshot arrives (and while
+   developing without a token).
    ───────────────────────────────────────────────────────── */
 (function (global) {
   'use strict';
 
-  function inMinutes(m) {
-    return new Date(Date.now() + m * 60000);
+  var UNKNOWN = ['unknown', 'unavailable', 'none', 'None', null, ''];
+
+  function isUnknown(v) { return v == null || UNKNOWN.indexOf(v) !== -1; }
+
+  function live() {
+    return !!(global.HA && global.HA.isConnected());
   }
 
-  // Mock defaults come straight from the design spec.
+  function inMinutes(m) { return new Date(Date.now() + m * 60000); }
+
+  /* ── Mock fallbacks ─────────────────────────────────── */
   var mock = {
     lights: {
       living:  { on: true, level: 3, warm: true },
       bedroom: { on: true, level: 2, warm: false }
     },
-
-    // Day counts until collection, as the HA sensors report them.
-    waste: {
-      paper:     { label: 'Paper',     days: 0 },
-      cardboard: { label: 'Cardboard', days: 1 }
-    },
-
-    // Absolute departure times; countdowns are derived in the UI
-    // so they tick every second instead of once a minute.
     departures: [inMinutes(8), inMinutes(17), inMinutes(30)],
-
+    wasteChips: [
+      { key: 'paper',     label: 'Paper',     days: 0 },
+      { key: 'cardboard', label: 'Cardboard', days: 1 }
+    ],
     weather: {
       condition: 'partlycloudy',
       conditionLabel: 'Partly cloudy',
@@ -37,7 +37,6 @@
       low: 14,
       high: 23
     },
-
     forecast: [
       { hour: 21, temp: 18, condition: 'partlycloudy' },
       { hour: 22, temp: 17, condition: 'cloudy' },
@@ -50,29 +49,83 @@
     ]
   };
 
-  /* The interface app.js codes against. Every method here becomes
-     an HA read or an HA service call in later steps. */
-  var Data = {
-    isLive: false,
+  /* Last values actually read from HA. Once real data has been
+     seen we never fall back to mock again — showing invented bus
+     times on a wall display is worse than showing stale ones, and
+     the connection chip already flags that the link is down. */
+  var lastLive = {};
 
+  function cached(key, read) {
+    if (live()) {
+      var value = read();
+      lastLive[key] = value;
+      return value;
+    }
+    return key in lastLive ? lastLive[key] : null;
+  }
+
+  var Data = {
+
+    get isLive() { return live(); },
+
+    /* ── Departures ───────────────────────────────────────
+       Read straight off the timestamp sensors rather than the
+       bus_N_time / bus_N_countdown template sensors, so the
+       countdown can tick every second instead of once a minute
+       when HA re-evaluates now(). Returns three slots; a slot is
+       null when HA has nothing useful for it. */
+    getDepartures: function () {
+      return cached('departures', function () {
+        return ENTITIES.departures.map(function (id) {
+          var s = HA.stateOf(id);
+          if (isUnknown(s)) return null;
+          var d = new Date(s);
+          return isNaN(d.getTime()) ? null : d;
+        });
+      }) || mock.departures;
+    },
+
+    /* ── Waste chips ──────────────────────────────────────
+       Visibility is gated on the binary sensors, which already
+       encode the "within a day" rule; the day count only drives
+       the wording. Returns just the chips that should be shown,
+       in display order. */
+    getWasteChips: function () {
+      return cached('wasteChips', function () {
+        var out = [];
+        ['paper', 'cardboard'].forEach(function (key) {
+          var cfg = ENTITIES.waste[key];
+          if (HA.stateOf(cfg.warn) !== 'on') return;
+
+          var raw = HA.stateOf(cfg.days);
+          if (isUnknown(raw)) return;
+          var days = parseInt(raw, 10);
+          if (isNaN(days)) return;
+
+          out.push({ key: key, label: cfg.label, days: days });
+        });
+        return out;
+      }) || mock.wasteChips;
+    },
+
+    /* ── Lights ───────────────────────────────────────────
+       Still mock — Step 3. */
     getLight: function (room) { return mock.lights[room]; },
-    getWaste: function () { return mock.waste; },
-    getDepartures: function () { return mock.departures; },
+
+    /* ── Weather ──────────────────────────────────────────
+       Still mock — Steps 6-8. */
     getWeather: function () { return mock.weather; },
     getForecast: function () { return mock.forecast; },
 
-    /* Actions. In Step 3 these fire HA scripts and the resulting
-       state arrives back over the WebSocket. For now they mutate
-       local state directly and invoke the change callback. */
+    /* ── Actions (mock until Step 3) ──────────────────── */
     toggleLight: function (room) {
-      var l = mock.lights[room];
-      l.on = !l.on;
+      mock.lights[room].on = !mock.lights[room].on;
       Data.onChange();
     },
     stepBrightness: function (room, delta) {
       var l = mock.lights[room];
       l.level = Math.max(1, Math.min(3, l.level + delta));
-      l.on = true;                      // either button forces the light on
+      l.on = true;
       Data.onChange();
     },
     toggleColorTemp: function (room) {
@@ -80,7 +133,7 @@
       Data.onChange();
     },
 
-    onChange: function () {}            // app.js installs its renderer here
+    onChange: function () {}
   };
 
   global.Data = Data;
