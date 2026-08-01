@@ -51,103 +51,73 @@
     '<path d="M6 6l12 12M18 6L6 18" stroke="#f7efe4" stroke-width="1.8" stroke-linecap="round" />');
 
   /* ═══════════════════════════════════════════════════════
-     WEATHER ICONS — PLACEHOLDERS
+     WEATHER ICONS
 
-     Every condition Home Assistant can report is covered, so
-     nothing ever falls through to a generic shape. The forms
-     below are built from the design's own vocabulary (flat ink
-     shapes with terracotta accents) but they are stand-ins,
-     pending proper icons from the designer.
+     Taken verbatim from weather-icons.svg, the designer's sprite
+     sheet, which stays in the repo as the source of truth. Each
+     entry is one <symbol>'s contents, authored in a 60x60 box;
+     the large card icon scales the same geometry by 200/60, so
+     the two sizes cannot drift apart.
 
-     To swap one in, replace its entry in SHAPES. Each is
-     authored in a 60x60 box and drawn from the parts below;
-     the large card icon reuses the same geometry scaled up, so
-     the two sizes can never drift apart.
+     To update: replace weather-icons.svg and re-extract.
      ═══════════════════════════════════════════════════════ */
 
-  // Cloud sitting low, for conditions with nothing beneath it.
-  var CLOUD =
-    '<circle cx="24" cy="28" r="13" fill="' + INK + '" />' +
-    '<circle cx="38" cy="30" r="10" fill="' + INK + '" />' +
-    '<rect x="24" y="28" width="24" height="12" rx="6" fill="' + INK + '" />';
-
-  // Cloud lifted, to leave room for precipitation underneath.
-  var CLOUD_HIGH =
-    '<circle cx="24" cy="24" r="12" fill="' + INK + '" />' +
-    '<circle cx="37" cy="26" r="9" fill="' + INK + '" />' +
-    '<rect x="24" y="24" width="22" height="11" rx="5.5" fill="' + INK + '" />';
-
-  var SUN = '<circle cx="30" cy="30" r="17" fill="' + GROUND + '" />';
-
-  // Crescent as a single even-odd path, so it does not depend on
-  // the card colour showing through a cut-out circle.
-  var MOON =
-    '<path fill-rule="evenodd" fill="' + GROUND + '" d="' +
-    'M30 13a17 17 0 1 0 0 34 17 17 0 1 0 0-34z' +
-    'M38 11a15 15 0 1 0 0 30 15 15 0 1 0 0-30z" />';
-
-  function drop(x, y, h) {           // rain: vertical dash
-    return '<rect x="' + x + '" y="' + y + '" width="3.5" height="' + h +
-           '" rx="1.75" fill="' + GROUND + '" />';
-  }
-  function flake(x, y) {             // snow: soft round
-    return '<circle cx="' + x + '" cy="' + y + '" r="3.2" fill="' + GROUND + '" />';
-  }
-  function stone(x, y) {             // hail: small and hard
-    return '<circle cx="' + x + '" cy="' + y + '" r="2.6" fill="' + INK + '" />';
-  }
-  function bar(x, y, w) {            // fog / wind streak
-    return '<rect x="' + x + '" y="' + y + '" width="' + w +
-           '" height="3.4" rx="1.7" fill="' + GROUND + '" />';
-  }
-  var BOLT = '<path fill="' + GROUND + '" d="M33 38l-9 12h6l-2 9 10-13h-6l3-8z" />';
-
   var SHAPES = {
-    'sunny':        SUN,
-    'clear-night':  MOON,
+    'sunny':
+      '<circle cx="30" cy="30" r="18" fill="#b0603a"></circle>',
+
+    'clear-night':
+      '<path fill="#b0603a" d="M28.74 12.05A18 18 0 1 0 45.92 38.4A16.5 16.5 0 0 1 28.74 12.05z"></path>',
 
     'partlycloudy':
-      '<circle cx="36" cy="22" r="13" fill="' + GROUND + '" />' +
-      '<circle cx="22" cy="38" r="12" fill="' + INK + '" />' +
-      '<circle cx="36" cy="40" r="9" fill="' + INK + '" />' +
-      '<rect x="22" y="38" width="24" height="11" rx="5.5" fill="' + INK + '" />',
+      '<circle cx="36" cy="22" r="13" fill="#b0603a"></circle><circle cx="20" cy="38" r="10" fill="#16130f"></circle><circle cx="31" cy="35" r="12" fill="#16130f"></circle><circle cx="40" cy="40" r="7" fill="#16130f"></circle><rect x="11" y="40" width="36" height="9" rx="4.5" fill="#16130f"></rect>',
 
     'partlycloudy-night':
-      '<path fill-rule="evenodd" fill="' + GROUND + '" d="' +
-      'M36 9a13 13 0 1 0 0 26 13 13 0 1 0 0-26z' +
-      'M42 7a11 11 0 1 0 0 22 11 11 0 1 0 0-22z" />' +
-      '<circle cx="22" cy="38" r="12" fill="' + INK + '" />' +
-      '<circle cx="36" cy="40" r="9" fill="' + INK + '" />' +
-      '<rect x="22" y="38" width="24" height="11" rx="5.5" fill="' + INK + '" />',
+      '<path fill="#b0603a" d="M35.83 5A13 13 0 1 0 48.24 22.37A12 12 0 0 1 35.83 5z"></path><circle cx="20" cy="38" r="10" fill="#16130f"></circle><circle cx="31" cy="35" r="12" fill="#16130f"></circle><circle cx="40" cy="40" r="7" fill="#16130f"></circle><rect x="11" y="40" width="36" height="9" rx="4.5" fill="#16130f"></rect>',
 
-    'cloudy': CLOUD,
+    'cloudy':
+      '<circle cx="22" cy="32" r="10" fill="#16130f"></circle><circle cx="34" cy="29" r="13" fill="#16130f"></circle><circle cx="43" cy="35" r="7" fill="#16130f"></circle><rect x="12" y="34" width="38" height="10" rx="5" fill="#16130f"></rect>',
 
-    'fog': CLOUD + bar(14, 46, 32) + bar(20, 53, 26),
+    'fog':
+      '<rect x="8" y="11" width="44" height="6" rx="3" fill="#16130f"></rect><rect x="14" y="22" width="38" height="6" rx="3" fill="#b0603a"></rect><rect x="6" y="33" width="40" height="6" rx="3" fill="#16130f"></rect><rect x="16" y="44" width="30" height="6" rx="3" fill="#16130f"></rect>',
 
-    'rainy':   CLOUD_HIGH + drop(23, 42, 8) + drop(33, 45, 8) + drop(43, 42, 8),
-    'pouring': CLOUD_HIGH + drop(20, 41, 13) + drop(29, 44, 13) +
-               drop(38, 41, 13) + drop(46, 44, 11),
+    'rainy':
+      '<g transform="translate(2,4.5) scale(0.72)"><path d="M30 8c0 0 13 15 13 22a13 13 0 1 1 -26 0c0-7 13-22 13-22z" fill="#b0603a"></path></g><g transform="translate(27,6) scale(0.55)"><path d="M30 8c0 0 13 15 13 22a13 13 0 1 1 -26 0c0-7 13-22 13-22z" fill="#b0603a"></path></g><g transform="translate(22,30) scale(0.5)"><path d="M30 8c0 0 13 15 13 22a13 13 0 1 1 -26 0c0-7 13-22 13-22z" fill="#16130f"></path></g>',
 
-    'snowy':       CLOUD_HIGH + flake(23, 45) + flake(34, 48) + flake(44, 44),
-    'snowy-rainy': CLOUD_HIGH + flake(23, 45) + drop(33, 42, 9) + flake(44, 44),
-    'hail':        CLOUD_HIGH + stone(23, 45) + stone(34, 48) + stone(44, 44),
+    'pouring':
+      '<g transform="translate(-2.35,-0.2) scale(0.55,1.15)"><path d="M30 8c0 0 13 15 13 22a13 13 0 1 1 -26 0c0-7 13-22 13-22z" fill="#b0603a"></path></g><g transform="translate(13.65,-0.2) scale(0.55,1.15)"><path d="M30 8c0 0 13 15 13 22a13 13 0 1 1 -26 0c0-7 13-22 13-22z" fill="#16130f"></path></g><g transform="translate(29.65,-0.2) scale(0.55,1.15)"><path d="M30 8c0 0 13 15 13 22a13 13 0 1 1 -26 0c0-7 13-22 13-22z" fill="#b0603a"></path></g>',
 
-    'lightning':       CLOUD_HIGH + BOLT,
-    'lightning-rainy': CLOUD_HIGH + BOLT + drop(20, 42, 8) + drop(45, 42, 8),
+    'snowy':
+      '<path d="M30 13v32M16.1 21l27.8 16M43.9 21L16.1 37" fill="none" stroke="#b0603a" stroke-width="3.4" stroke-linecap="round"></path><path d="M30 18l-4.5-4.5M30 18l4.5-4.5M30 40l-4.5 4.5M30 40l4.5 4.5M39.6 23.5l-.2-6M39.6 23.5l5.8 1.5M20.4 34.5l.2 6M20.4 34.5l-5.8-1.5M20.4 23.5l-5.8 1.5M20.4 23.5l.2-6M39.6 34.5l5.8-1.5M39.6 34.5l-.2 6" fill="none" stroke="#b0603a" stroke-width="2.6" stroke-linecap="round"></path>',
 
-    'windy':         bar(10, 22, 38) + bar(16, 31, 32) + bar(10, 40, 26),
-    'windy-variant': CLOUD + bar(12, 47, 30) + bar(20, 54, 22),
+    'snowy-rainy':
+      '<g transform="translate(-3,2) scale(0.62)"><path d="M30 13v32M16.1 21l27.8 16M43.9 21L16.1 37" fill="none" stroke="#b0603a" stroke-width="3.4" stroke-linecap="round"></path><path d="M30 18l-4.5-4.5M30 18l4.5-4.5M30 40l-4.5 4.5M30 40l4.5 4.5M39.6 23.5l-.2-6M39.6 23.5l5.8 1.5M20.4 34.5l.2 6M20.4 34.5l-5.8-1.5M20.4 23.5l-5.8 1.5M20.4 23.5l.2-6M39.6 34.5l5.8-1.5M39.6 34.5l-.2 6" fill="none" stroke="#b0603a" stroke-width="2.6" stroke-linecap="round"></path></g><g transform="translate(23,22) scale(0.55)"><path d="M30 8c0 0 13 15 13 22a13 13 0 1 1 -26 0c0-7 13-22 13-22z" fill="#16130f"></path></g>',
 
-    // No agreed visual for "exceptional"; flagged rather than guessed.
-    'exceptional': CLOUD_HIGH +
-      '<rect x="28" y="40" width="4" height="12" rx="2" fill="' + GROUND + '" />' +
-      '<circle cx="30" cy="56" r="2.6" fill="' + GROUND + '" />'
+    'hail':
+      '<path d="M29.00 26.00L23.00 36.39L11.00 36.39L5.00 26.00L11.00 15.61L23.00 15.61z" fill="#b0603a"></path><path d="M55.00 36.00L49.00 46.39L37.00 46.39L31.00 36.00L37.00 25.61L49.00 25.61z" fill="#16130f"></path>',
+
+    'lightning':
+      '<circle cx="22" cy="24" r="10" fill="#16130f"></circle><circle cx="34" cy="21" r="13" fill="#16130f"></circle><circle cx="43" cy="27" r="7" fill="#16130f"></circle><rect x="12" y="26" width="38" height="10" rx="5" fill="#16130f"></rect><path d="M35 37L22 52h7l-3 7L39 45h-7.5z" fill="#b0603a"></path>',
+
+    'lightning-rainy':
+      '<circle cx="22" cy="24" r="10" fill="#16130f"></circle><circle cx="34" cy="21" r="13" fill="#16130f"></circle><circle cx="43" cy="27" r="7" fill="#16130f"></circle><rect x="12" y="26" width="38" height="10" rx="5" fill="#16130f"></rect><g transform="translate(-11,0)"><path d="M33 37L23 49h6l-2.5 6L36 43h-6.5z" fill="#b0603a"></path></g><g transform="translate(8,3)"><path d="M33 37L23 49h6l-2.5 6L36 43h-6.5z" fill="#b0603a"></path></g>',
+
+    'windy':
+      '<path d="M6 20h20a6.5 6.5 0 1 0 -6.5-6.5" fill="none" stroke="#b0603a" stroke-width="5.5" stroke-linecap="round"></path><path d="M6 36h38a6.5 6.5 0 1 0 -6.5-6.5" fill="none" stroke="#16130f" stroke-width="5.5" stroke-linecap="round"></path><path d="M6 44h24a6.5 6.5 0 1 1 -6.5 6.5" fill="none" stroke="#b0603a" stroke-width="5.5" stroke-linecap="round"></path>',
+
+    'exceptional':
+      '<path d="M27.5 13.5Q30 9.5 32.5 13.5L52 48Q54.5 52.5 49.5 52.5H10.5Q5.5 52.5 8 48z" fill="#b0603a"></path><rect x="27" y="24" width="6" height="14" rx="3" fill="#16130f"></rect><circle cx="30" cy="45" r="3.6" fill="#16130f"></circle>'
   };
 
-  /* Conditions that get a distinct night form. HA already swaps
-     sunny -> clear-night on its own, so partlycloudy is the only
-     one that needs synthesising from the sun's position. */
+  /* Conditions with a distinct night form. Home Assistant already
+     swaps sunny -> clear-night on its own, so partlycloudy is the
+     only one that has to be chosen from the sun's position. */
   var NIGHT_VARIANT = { 'partlycloudy': 'partlycloudy-night' };
+
+  /* windy-variant was not in the delivered sprite. Until it is, it
+     borrows the plain windy mark rather than falling through to a
+     cloud, which would read as the wrong weather entirely. */
+  var FALLBACK = { 'windy-variant': 'windy' };
 
   /* Human-readable labels for the weather card. */
   var LABELS = {
@@ -170,26 +140,14 @@
 
   function resolve(condition, night) {
     if (night && NIGHT_VARIANT[condition]) return NIGHT_VARIANT[condition];
-    return SHAPES[condition] ? condition : 'cloudy';
+    if (SHAPES[condition]) return condition;
+    return FALLBACK[condition] || 'cloudy';
   }
 
-  // The card icon is hand-authored at 200x200 (exact spec geometry);
-  // every other shape scales the 60x60 form by 200/60.
-  var LARGE_PARTLYCLOUDY =
-    '<circle cx="126" cy="62" r="54" fill="' + GROUND + '" />' +
-    '<circle cx="70" cy="124" r="40" fill="' + INK + '" />' +
-    '<circle cx="114" cy="128" r="31" fill="' + INK + '" />' +
-    '<rect x="70" y="128" width="76" height="31" rx="15.5" fill="' + INK + '" />' +
-    '<circle cx="40" cy="144" r="25" fill="' + INK + '" />' +
-    '<rect x="40" y="134" width="76" height="25" rx="12.5" fill="' + INK + '" />';
-
   function weatherLarge(condition, night) {
-    var key = resolve(condition, night);
-    if (key === 'partlycloudy') {
-      return svg('0 0 200 200', LARGE_PARTLYCLOUDY, 'preserveAspectRatio="xMidYMid meet"');
-    }
-    return svg('0 0 200 200', '<g transform="scale(3.3333)">' + SHAPES[key] + '</g>',
-               'preserveAspectRatio="xMidYMid meet"');
+    return svg('0 0 200 200',
+      '<g transform="scale(3.3333)">' + SHAPES[resolve(condition, night)] + '</g>',
+      'preserveAspectRatio="xMidYMid meet"');
   }
 
   function weatherSmall(condition, night) {

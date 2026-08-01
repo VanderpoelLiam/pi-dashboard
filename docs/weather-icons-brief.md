@@ -1,5 +1,11 @@
 # Design brief: weather icons
 
+> **Status:** delivered as `weather-icons.svg` and wired up, with one
+> exception — **`windy-variant` was not included**. It currently borrows the
+> plain `windy` mark. Everything else in this brief is done; the sprite is now
+> the source of truth and supersedes the "already approved" geometry below,
+> which the delivered set redrew.
+
 ## What this is for
 
 A wall-mounted Home Assistant dashboard running fullscreen on a Raspberry Pi at

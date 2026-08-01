@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Weather icon placeholders</title>
+<title>Weather icons</title>
 <link rel="stylesheet" href="css/fonts.css">
 <style>
   :root { --ground:#b0603a; --card:#efe9de; --ink:#16130f; --muted:#6f6559; --on-ink:#f7efe4; }
@@ -34,25 +34,32 @@
     font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.14em;
     padding:3px 8px; border-radius:999px; background:var(--ink); color:var(--on-ink);
   }
+  .tag.warn { background:#b0603a; color:var(--on-ink); }
 </style>
 </head>
 <body>
-<h1>Weather icon placeholders</h1>
-<div class="sub">ALL 15 HOME ASSISTANT CONDITIONS · LARGE (CARD) AND SMALL (FORECAST) · NIGHT VARIANTS MARKED</div>
+<h1>Weather icons</h1>
+<div class="sub">ALL 15 HOME ASSISTANT CONDITIONS · LARGE (CARD) AND SMALL (FORECAST) · RENDERED FROM ICONS.JS</div>
 <div class="grid" id="grid"></div>
 
 <script src="js/icons.js"></script>
 <script>
   var NIGHT = { partlycloudy: true };
+  // Conditions with no artwork of their own, borrowing another mark.
+  var BORROWED = { 'windy-variant': 'windy' };
+
   document.getElementById('grid').innerHTML = Icons.conditions.map(function (c) {
     var variants = '<div class="row">' + Icons.weatherSmall(c, false) +
       (NIGHT[c] ? Icons.weatherSmall(c, true) : '') + '</div>';
+    var tag = NIGHT[c] ? '<div class="tag">HAS NIGHT FORM</div>'
+            : BORROWED[c] ? '<div class="tag warn">NO ART &mdash; USING ' +
+                            BORROWED[c].toUpperCase() + '</div>'
+            : '';
     return '<div class="cell">' +
       '<div class="big">' + Icons.weatherLarge(c, false) + '</div>' +
       variants +
       '<div class="label">' + Icons.conditionLabel(c) + '</div>' +
-      '<div class="name">' + c + '</div>' +
-      (NIGHT[c] ? '<div class="tag">HAS NIGHT FORM</div>' : '') +
+      '<div class="name">' + c + '</div>' + tag +
       '</div>';
   }).join('');
 </script>
