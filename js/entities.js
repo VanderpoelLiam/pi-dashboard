@@ -71,8 +71,17 @@
      b < 200, and parks at 77 when jumping into the middle band. */
   global.BRIGHTNESS_LEVELS = {
     lowMax: 40,   // brightness < 40  -> level 1
-    medMax: 200   // brightness < 200 -> level 2, else level 3
+    medMax: 200,  // brightness < 200 -> level 2, else level 3
+    mid: 77       // the value the blueprint parks on for level 2
   };
+
+  /* Both warm_cool_toggle scripts branch on
+       color_temp_kelvin > 3000 ? 2202 : 3600
+     so 3000 K is the dividing line between warm and cool. The
+     living room splits its LED controller onto 2000/6500, but
+     averaged across the group that still lands either side of
+     3000, so one threshold covers both rooms. */
+  global.WARM_BELOW_KELVIN = 3000;
 
   global.brightnessToLevel = function (brightness) {
     var b = Number(brightness) || 0;
