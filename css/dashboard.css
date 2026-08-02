@@ -91,11 +91,6 @@ html, body {
   line-height: 0.78;
   font-variant-numeric: tabular-nums;
 }
-.clock-seconds {
-  font-family: var(--mono);
-  font-size: 32px;
-  color: var(--ink);
-}
 .clock-date { font-size: 32px; font-weight: 600; margin-top: 14px; }
 
 .bin-chips { display: flex; flex-direction: column; gap: 10px; flex: none; }
