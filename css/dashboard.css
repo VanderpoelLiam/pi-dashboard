@@ -144,7 +144,12 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 .dep-next-countdown { font-size: 28px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+/* Width is set per render, in whole 9px dashes, so the comb always
+   ends on a dash rather than a sliced-off tooth. Starts empty: the
+   first render fills it in, and a comb sized before the departures
+   are known would be inventing a wait. */
 .dep-comb {
+  width: 0;
   height: 11px;
   border-radius: 3px;
   margin-top: 12px;

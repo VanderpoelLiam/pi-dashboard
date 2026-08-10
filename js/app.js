@@ -61,14 +61,75 @@
     return mins <= 0 ? 'now' : 'in ' + mins + ' min';
   }
 
+  /* The comb is the wait made visible: it loses dashes off its right
+     end as the bus closes in, and is gone entirely for the minute the
+     bus is leaving in.
+
+     A fixed window would not survive this line — eight minutes at
+     rush hour, twenty late and at weekends — so the full comb is one
+     headway, measured as the gap to the bus after next. That way a
+     comb filled right after a bus pulls out means the same thing at
+     both frequencies: a whole wait to go. With no second bus to
+     measure against there is no headway to infer, so it falls back
+     to a plain ten minutes. */
+  var COMB_MAX_DASHES = 36;
+  var COMB_PITCH_PX = 9;
+  var COMB_FALLBACK_MS = 10 * 60 * 1000;
+  var COMB_MIN_MS = 4 * 60 * 1000;
+  var COMB_MAX_MS = 30 * 60 * 1000;
+
+  function combWindow(next, after) {
+    if (!next || !after) return COMB_FALLBACK_MS;
+    var headway = after.getTime() - next.getTime();
+    return Math.max(COMB_MIN_MS, Math.min(COMB_MAX_MS, headway));
+  }
+
+  function renderComb(next, after, now) {
+    var comb = $('dep-comb');
+    if (!comb) return;
+
+    /* Time left runs to the *start* of the departure's minute, not to
+       its timestamp, so the last dash goes out on the same tick the
+       countdown flips to "now" and the comb stays empty for the whole
+       of that minute. Measuring to the timestamp left a dash burning
+       for up to a minute after the card said the bus was here. */
+    var left = next ? minuteOf(next) * 60000 - now.getTime() : 0;
+    var fraction = Math.max(0, Math.min(1, left / combWindow(next, after)));
+
+    /* Round up, so a bus still on its way keeps a last dash rather
+       than showing the same bare card as one that has gone. */
+    var dashes = Math.ceil(fraction * COMB_MAX_DASHES);
+    comb.style.width = (dashes * COMB_PITCH_PX) + 'px';
+  }
+
+  /* A departure stays on the card for the whole minute it leaves in
+     — 18:38 reads "now" from 18:38:00 to 18:38:59 — and drops off
+     when the clock ticks over, shifting the later buses up. Same
+     whole-clock-minute test as the countdown, so the card can never
+     show "now" against a minute the clock has already left behind.
+
+     HA keeps publishing a departure for a while after it has gone,
+     so this is what decides which bus is next, not the sensor order.
+     While the link is down the stale list ages out and the card ends
+     up on em-dashes, which is the honest reading: we do not know
+     when the next bus is. */
+  function isUpcoming(d, now) {
+    return !!d && minuteOf(d) >= minuteOf(now);
+  }
+
   function renderDepartures(now) {
-    var deps = Data.getDepartures();
+    var deps = Data.getDepartures().filter(function (d) {
+      return isUpcoming(d, now);
+    });
+
     for (var i = 0; i < 3; i++) {
       var d = deps[i];
       var n = i + 1;
       $('dep' + n + '-time').textContent = d ? hhmm(d) : '—';
       $('dep' + n + '-countdown').textContent = d ? countdownText(d, now) : '—';
     }
+
+    renderComb(deps[0], deps[1], now);
   }
 
   /* ── Lights ─────────────────────────────────────────── */
