@@ -53,6 +53,18 @@ values seen (stale but true) → nothing. Mock data appears only under `?demo=1`
 A wall display showing plausible-but-fake bus times is worse than one visibly
 showing none, and it once masked a real connection failure for an hour.
 
+**Departures are the exception: they never fall back to the last values seen.**
+Link down, the card goes to em-dashes at once. Every other card degrades
+honestly — a stale temperature is still roughly the weather outside — but a
+stale departure counts down as convincingly as a live one, and you act on it by
+walking out of the door. `getDepartures` therefore skips `cached()`.
+
+Past departures are dropped in `app.js`, not `data.js`: a departure holds the
+card for the whole clock minute it leaves in (18:38 reads "now" until 18:39:00),
+then falls off and the later buses shift up. HA keeps publishing a departure for
+a while after it has gone, so this — not the sensor order — is what decides which
+bus is next.
+
 Missing values render as em-dashes, with a chip in the bottom-left corner:
 
 | Chip | Meaning |

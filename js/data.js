@@ -150,16 +150,25 @@
        bus_N_time / bus_N_countdown template sensors, so the
        countdown can tick every second instead of once a minute
        when HA re-evaluates now(). Returns three slots; a slot is
-       null when HA has nothing useful for it. */
+       null when HA has nothing useful for it.
+
+       Departures are the one getter that does not fall back to the
+       last values seen. Every other card degrades honestly when the
+       link drops — a stale temperature is still roughly the weather
+       outside — but a stale departure keeps counting down as
+       convincingly as a live one, and you act on it by walking out
+       of the door. With no HA there is nothing true to say about the
+       next bus, so the card says nothing: em-dashes, under the
+       NO CONNECTION chip. */
     getDepartures: function () {
-      return cached('departures', function () {
-        return ENTITIES.departures.map(function (id) {
-          var s = HA.stateOf(id);
-          if (isUnknown(s)) return null;
-          var d = new Date(s);
-          return isNaN(d.getTime()) ? null : d;
-        });
-      }, mock.departures) || [null, null, null];
+      if (!live()) return DEMO ? mock.departures : [null, null, null];
+
+      return ENTITIES.departures.map(function (id) {
+        var s = HA.stateOf(id);
+        if (isUnknown(s)) return null;
+        var d = new Date(s);
+        return isNaN(d.getTime()) ? null : d;
+      });
     },
 
     /* ── Waste chips ──────────────────────────────────────
