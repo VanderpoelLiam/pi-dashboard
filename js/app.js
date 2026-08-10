@@ -18,8 +18,7 @@
   function isUnknown(v) { return v === null || v === undefined || v === ''; }
 
   /* ── Clock ──────────────────────────────────────────── */
-  function renderClock() {
-    var now = new Date();
+  function renderClock(now) {
     $('clock-time').textContent = hhmm(now);
     $('clock-date').textContent =
       DAYS[now.getDay()] + ', ' + now.getDate() + ' ' + MONTHS[now.getMonth()];
@@ -49,19 +48,26 @@
     }).join('');
   }
 
-  /* ── Departures ─────────────────────────────────────── */
-  function countdownText(target) {
-    var mins = Math.round((target.getTime() - Date.now()) / 60000);
+  /* ── Departures ─────────────────────────────────────────
+     The countdown counts whole clock minutes between now and the
+     departure, not elapsed time rounded to minutes. Rounding put
+     it half a minute out of phase with the clock: it stepped down
+     at :30 and then sat still across the minute change, which on
+     a wall panel reads as a frozen card. */
+  function minuteOf(d) { return Math.floor(d.getTime() / 60000); }
+
+  function countdownText(target, now) {
+    var mins = minuteOf(target) - minuteOf(now);
     return mins <= 0 ? 'now' : 'in ' + mins + ' min';
   }
 
-  function renderDepartures() {
+  function renderDepartures(now) {
     var deps = Data.getDepartures();
     for (var i = 0; i < 3; i++) {
       var d = deps[i];
       var n = i + 1;
       $('dep' + n + '-time').textContent = d ? hhmm(d) : '—';
-      $('dep' + n + '-countdown').textContent = d ? countdownText(d) : '—';
+      $('dep' + n + '-countdown').textContent = d ? countdownText(d, now) : '—';
     }
   }
 
@@ -105,10 +111,10 @@
     $('weather-icon').innerHTML = Icons.weatherLarge(w.condition, w.night);
   }
 
-  function renderForecast() {
+  function renderForecast(now) {
     var rows = Data.getForecast();
     var w = Data.getWeather() || {};
-    var now = new Date();
+    now = now || new Date();
 
     var lo = isUnknown(w.low) ? '—' : w.low;
     var hi = isUnknown(w.high) ? '—' : w.high;
@@ -197,18 +203,22 @@
   }
 
   /* ── Boot ───────────────────────────────────────────── */
+  /* One `now` per pass, so the clock and the countdowns can never
+     land either side of a minute boundary within the same render. */
   function renderAll() {
-    renderClock();
+    var now = new Date();
+    renderClock(now);
     renderBins();
-    renderDepartures();
+    renderDepartures(now);
     renderLights();
     renderWeather();
-    if (ui.forecastOpen) renderForecast();
+    if (ui.forecastOpen) renderForecast(now);
   }
 
   function tick() {
-    renderClock();
-    renderDepartures();
+    var now = new Date();
+    renderClock(now);
+    renderDepartures(now);
   }
 
   function init() {
