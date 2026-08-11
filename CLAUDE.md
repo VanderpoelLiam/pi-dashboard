@@ -93,8 +93,9 @@ the scripts always drive every member together.
 
 All control goes through HA scripts — never `light.turn_on`. Each script jumps to
 an absolute brightness, so which one to call depends on where the light is now.
-The branch points come from the user's Hue dimmer blueprint, which is what keeps
-the wall panel and the physical remote stepping through the same three levels:
+The branch points come from the user's Hue dimmer blueprint, which calls these
+same scripts from its UP and DOWN presses — that shared call is what keeps the
+wall panel and the physical remote stepping through the same three levels:
 
 | Current brightness | BRIGHTER | DIMMER |
 |---|---|---|
@@ -105,9 +106,11 @@ the wall panel and the physical remote stepping through the same three levels:
 With the light off, brightness defaults to `0` going up and `255` going down, so
 both land on mid. That is deliberate, and matches the blueprint.
 
-**`_mid` must stay strictly between 40 and 200.** The bedroom script is
-`brightness_pct: 77` → ~196, only four points of headroom. If it ever reached
-200, a DIMMER press from mid would re-select mid and the level would stick at 2.
+**`_mid` must stay strictly between 40 and 200.** If it ever reached 200, a
+DIMMER press from mid would re-select mid and the level would stick at 2. The
+bedroom script is `brightness: 77` — the raw 0–255 scale, not a percentage — and
+the living room averages ~142 across its group, so both sit well clear of either
+boundary.
 
 Warm versus cool is decided at **3000 K**, taken from the `warm_cool_toggle`
 scripts themselves (`2202` warm, `3600` cool). The living room splits its LED

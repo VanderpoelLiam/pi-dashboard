@@ -69,12 +69,13 @@
 
      These boundaries are lifted from the Hue dimmer blueprint so the
      wall dashboard and the physical remote agree on what "low",
-     "medium" and "high" mean: the remote branches on b < 40 and
-     b < 200, and parks at 77 when jumping into the middle band. */
+     "medium" and "high" mean: UP selects mid below 40 and bright
+     otherwise, DOWN selects mid above 200 and dim otherwise. Which
+     brightness mid actually lands on is a property of the scripts,
+     and differs per room — see SCRIPT_LEVEL below. */
   global.BRIGHTNESS_LEVELS = {
     lowMax: 40,   // brightness < 40  -> level 1
-    medMax: 200,  // brightness < 200 -> level 2, else level 3
-    mid: 77       // the value the blueprint parks on for level 2
+    medMax: 200   // brightness < 200 -> level 2, else level 3
   };
 
   /* Both warm_cool_toggle scripts branch on
@@ -91,7 +92,7 @@
      Deliberately levels rather than brightness values, because the
      scripts do not agree on a number across rooms:
        dim     5%                     -> 13         both rooms
-       mid     77%                    -> ~196       bedroom
+       mid     raw 77, not a percent  -> 77         bedroom
        mid     50% no-LED + 77% LED   -> ~142 mean  living room
        bright  100%                   -> 255        both rooms
      The levels are identical even though the values are not.
