@@ -149,13 +149,14 @@ html, body {
    9px dashes, so the mark stands still at its own minute and only
    the dashes move — a mark that shifted as the comb drained would be
    unreadable as a threshold. Both segments start on a multiple of 9
-   (0 and 63), which keeps their gradients in phase across the notch.
-   Segments start empty: the first render fills them in, and a comb
-   sized before the departures are known would be inventing a wait. */
+   (0 and 54), which keeps every tooth on the same 9px grid, mark
+   included. Segments start empty: the first render fills them in,
+   and a comb sized before the departures are known would be
+   inventing a wait. */
 .dep-comb {
   position: relative;
-  width: 279px;   /* 30 dashes + the one-dash notch */
-  height: 19px;
+  width: 270px;   /* 30 dashes */
+  height: 19px;   /* the teeth are 11; the mark overhangs them */
   margin-top: 8px;
 }
 /* Square ends, deliberately. A radius here clipped the first and last
@@ -169,11 +170,15 @@ html, body {
   background: repeating-linear-gradient(90deg, var(--ink) 0 3px, transparent 3px 9px);
 }
 #dep-comb-walk { left: 0; }
-#dep-comb-rest { left: 63px; }
-/* Stands in the notch, clear of the teeth either side of it. */
+#dep-comb-rest { left: 54px; }
+/* The sixth tooth, in accent rather than ink — the last dash of the
+   three-minute walk. It keeps the comb's grid and stroke width, so it
+   reads as one of the teeth rather than furniture laid over them, but
+   overhangs them top and bottom: at three feet the extra height is
+   what finds it, and the colour is what explains it. */
 .dep-comb-mark {
   position: absolute;
-  left: 57px;
+  left: 45px;
   top: 0;
   width: 3px;
   height: 19px;

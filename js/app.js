@@ -74,11 +74,13 @@
      ambiguous between fifteen minutes and forty, which is the trade
      an absolute scale makes.
 
-     A one-dash notch six dashes in marks the walk to the stop. The
-     mark is fixed at that minute and the comb's right end travels
-     towards it: while the end is right of the mark the bus is
-     catchable, and when it passes to the left it is not. Nothing
-     else on the card changes at that point — the comb carries it. */
+     The sixth tooth is drawn in accent instead of ink: it is the last
+     dash of the three-minute walk to the stop. It holds its place
+     whatever the comb is doing, so while ink teeth still stand to its
+     right the bus is catchable, and once they have gone it is not.
+     Nothing else on the card changes at that point — the comb carries
+     it. The ink run therefore stops one tooth short of the walk, at
+     five, and the mark supplies the sixth. */
   var COMB_DASH_MS = 30 * 1000;
   var COMB_CAP_MS = 15 * 60 * 1000;
   var COMB_WALK_MS = 3 * 60 * 1000;
@@ -102,7 +104,7 @@
        than showing the same bare card as one that has gone. */
     var dashes = Math.ceil(capped / COMB_DASH_MS);
 
-    walk.style.width = (Math.min(dashes, COMB_WALK_DASHES) * COMB_PITCH_PX) + 'px';
+    walk.style.width = (Math.min(dashes, COMB_WALK_DASHES - 1) * COMB_PITCH_PX) + 'px';
     rest.style.width = (Math.max(0, dashes - COMB_WALK_DASHES) * COMB_PITCH_PX) + 'px';
   }
 
