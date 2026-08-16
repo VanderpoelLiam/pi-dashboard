@@ -65,28 +65,30 @@
      end as the bus closes in, and is gone entirely for the minute the
      bus is leaving in.
 
-     A fixed window would not survive this line — eight minutes at
-     rush hour, twenty late and at weekends — so the full comb is one
-     headway, measured as the gap to the bus after next. That way a
-     comb filled right after a bus pulls out means the same thing at
-     both frequencies: a whole wait to go. With no second bus to
-     measure against there is no headway to infer, so it falls back
-     to a plain ten minutes. */
-  var COMB_MAX_DASHES = 36;
+     Each dash is a fixed half minute, so the comb reads as a quantity
+     of time rather than a proportion — six dashes always means three
+     minutes, whatever the timetable is doing. Anything beyond the cap
+     shows as a full comb: past a quarter of an hour the exact wait
+     stops mattering, and the clock time next to it is the better
+     answer anyway. The cost is that a comb sitting full and still is
+     ambiguous between fifteen minutes and forty, which is the trade
+     an absolute scale makes.
+
+     A one-dash notch six dashes in marks the walk to the stop. The
+     mark is fixed at that minute and the comb's right end travels
+     towards it: while the end is right of the mark the bus is
+     catchable, and when it passes to the left it is not. Nothing
+     else on the card changes at that point — the comb carries it. */
+  var COMB_DASH_MS = 30 * 1000;
+  var COMB_CAP_MS = 15 * 60 * 1000;
+  var COMB_WALK_MS = 3 * 60 * 1000;
   var COMB_PITCH_PX = 9;
-  var COMB_FALLBACK_MS = 10 * 60 * 1000;
-  var COMB_MIN_MS = 4 * 60 * 1000;
-  var COMB_MAX_MS = 30 * 60 * 1000;
+  var COMB_WALK_DASHES = COMB_WALK_MS / COMB_DASH_MS;
 
-  function combWindow(next, after) {
-    if (!next || !after) return COMB_FALLBACK_MS;
-    var headway = after.getTime() - next.getTime();
-    return Math.max(COMB_MIN_MS, Math.min(COMB_MAX_MS, headway));
-  }
-
-  function renderComb(next, after, now) {
-    var comb = $('dep-comb');
-    if (!comb) return;
+  function renderComb(next, now) {
+    var walk = $('dep-comb-walk');
+    var rest = $('dep-comb-rest');
+    if (!walk || !rest) return;
 
     /* Time left runs to the *start* of the departure's minute, not to
        its timestamp, so the last dash goes out on the same tick the
@@ -94,12 +96,14 @@
        of that minute. Measuring to the timestamp left a dash burning
        for up to a minute after the card said the bus was here. */
     var left = next ? minuteOf(next) * 60000 - now.getTime() : 0;
-    var fraction = Math.max(0, Math.min(1, left / combWindow(next, after)));
+    var capped = Math.max(0, Math.min(COMB_CAP_MS, left));
 
     /* Round up, so a bus still on its way keeps a last dash rather
        than showing the same bare card as one that has gone. */
-    var dashes = Math.ceil(fraction * COMB_MAX_DASHES);
-    comb.style.width = (dashes * COMB_PITCH_PX) + 'px';
+    var dashes = Math.ceil(capped / COMB_DASH_MS);
+
+    walk.style.width = (Math.min(dashes, COMB_WALK_DASHES) * COMB_PITCH_PX) + 'px';
+    rest.style.width = (Math.max(0, dashes - COMB_WALK_DASHES) * COMB_PITCH_PX) + 'px';
   }
 
   /* A departure stays on the card for the whole minute it leaves in
@@ -129,7 +133,7 @@
       $('dep' + n + '-countdown').textContent = d ? countdownText(d, now) : '—';
     }
 
-    renderComb(deps[0], deps[1], now);
+    renderComb(deps[0], now);
   }
 
   /* ── Lights ─────────────────────────────────────────── */

@@ -144,16 +144,39 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 .dep-next-countdown { font-size: 28px; font-weight: 600; color: var(--ink); white-space: nowrap; }
-/* Width is set per render, in whole 9px dashes, so the comb always
-   ends on a dash rather than a sliced-off tooth. Starts empty: the
-   first render fills it in, and a comb sized before the departures
-   are known would be inventing a wait. */
+/* The comb is a fixed-width track holding two dash segments and the
+   walk mark. Everything is positioned from the left edge, in whole
+   9px dashes, so the mark stands still at its own minute and only
+   the dashes move — a mark that shifted as the comb drained would be
+   unreadable as a threshold. Both segments start on a multiple of 9
+   (0 and 63), which keeps their gradients in phase across the notch.
+   Segments start empty: the first render fills them in, and a comb
+   sized before the departures are known would be inventing a wait. */
 .dep-comb {
+  position: relative;
+  width: 279px;   /* 30 dashes + the one-dash notch */
+  height: 19px;
+  margin-top: 8px;
+}
+.dep-comb-seg {
+  position: absolute;
+  top: 4px;
   width: 0;
   height: 11px;
   border-radius: 3px;
-  margin-top: 12px;
   background: repeating-linear-gradient(90deg, var(--ink) 0 3px, transparent 3px 9px);
+}
+#dep-comb-walk { left: 0; }
+#dep-comb-rest { left: 63px; }
+/* Stands in the notch, clear of the teeth either side of it. */
+.dep-comb-mark {
+  position: absolute;
+  left: 57px;
+  top: 0;
+  width: 3px;
+  height: 19px;
+  border-radius: 1px;
+  background: var(--ground);
 }
 .dep-later { flex: 1; display: flex; gap: 24px; justify-content: flex-end; }
 .dep-later-item { border-left: 1px solid var(--hairline); padding-left: 24px; }
