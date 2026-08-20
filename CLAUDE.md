@@ -79,7 +79,11 @@ attributes carry MeteoSwiss's whole response for the postcode: current
 conditions, nine daily entries, and the hourly series behind the chart —
 including the precipitation min/max the chart is built on. Home Assistant does
 the fetching because the feed sends no CORS headers and a browser is therefore
-not allowed to read it. See "Weather" in README.md for the config.
+not allowed to read it. The sensor is defined in the user's `configuration.yaml`,
+not here — `resource:` is
+`https://app-prod-ws.meteoswiss-app.ch/v2/plzDetail?plz=805300`, polled every
+15 minutes, with the response's `currentWeather`, `forecast` and `graph` kept as
+attributes and the entity excluded from the recorder.
 
 Because it is ordinary entity state, the forecast arrives over the subscription
 like everything else. There is no polling timer and no service call that returns

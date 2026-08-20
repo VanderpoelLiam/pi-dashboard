@@ -33,48 +33,6 @@ window.HA_CONFIG = {
 Generate the token in Home Assistant under **profile → Security → Long-lived
 access tokens**. `js/config.js` is gitignored and must never be committed.
 
-## Weather
-
-Every weather value — current temperature, condition, today's high and low, and
-the forecast chart — comes from one Home Assistant REST sensor holding
-MeteoSwiss's forecast for postcode 8053.
-
-Home Assistant does the fetching because the browser cannot: the feed sends no
-`Access-Control-Allow-Origin` header, so a page is not allowed to read it.
-
-```yaml
-rest:
-  # 805300 is postcode 8053, zero-padded to six digits.
-  - resource: https://app-prod-ws.meteoswiss-app.ch/v2/plzDetail?plz=805300
-    scan_interval: 900
-    headers:
-      User-Agent: pi-dashboard (Home Assistant REST sensor)
-    sensor:
-      - name: MeteoSwiss 8053
-        unique_id: meteoswiss_8053
-        unit_of_measurement: "°C"
-        value_template: "{{ value_json.currentWeather.temperature }}"
-        json_attributes:
-          - currentWeather
-          - forecast
-          - graph
-
-# ~18 KB of arrays per update, and nothing to look back at.
-recorder:
-  exclude:
-    entities:
-      - sensor.meteoswiss_8053
-```
-
-Every 15 minutes, around the clock. The endpoint's own headers invite a call
-every 120 seconds, so this is a very quiet client — quiet enough that varying
-the rate by time of day would save about 24 requests a day and cost an
-automation to maintain.
-
-The entity id must match [`js/entities.js`](js/entities.js). The endpoint is the
-one MeteoSwiss's phone app uses — undocumented, so it can change without notice;
-if it ever dies, the fix is a different `resource:` line.
-
 ## What you see when something is wrong
 
 The dashboard never invents data. If it cannot reach Home Assistant it shows the
@@ -111,15 +69,16 @@ renamed in HA, that is the only file to touch.
 
 ## Notes
 
+- **The weather comes from one Home Assistant sensor**,
+  `sensor.meteoswiss_8053`, whose attributes hold MeteoSwiss's response for the
+  postcode. Home Assistant fetches it because the feed sends no
+  `Access-Control-Allow-Origin` header, so the page is not allowed to.
 - **The layout does not scale.** 1280 × 720 with no breakpoints. On a different
   panel it will crop or letterbox; the cheap fix is a `transform: scale()` on
   `.root`.
 - **Lights are driven through HA scripts**, never `light.turn_on`. Which script a
   press calls depends on current brightness, mirroring a Hue dimmer blueprint so
   the wall panel and the physical remote step through the same three levels.
-- **All weather comes from one REST sensor** — see [Weather](#weather) below.
-  It arrives over the subscription like every other value, so there is no
-  polling timer in the dashboard.
 - **`windy-variant` has no artwork** and borrows the `windy` mark.
 - **To update the weather icons**, replace `weather-icons.svg` and copy each
   `<symbol>`'s contents into the `SHAPES` table in `js/icons.js`. Check the

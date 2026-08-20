@@ -63,7 +63,8 @@
        8053 — current conditions, nine daily entries, and the hourly
        series behind the forecast chart — in its attributes. Home
        Assistant fetches it because the feed sends no CORS headers,
-       so the page cannot. See "Weather" in README.md.
+       so the page cannot. The sensor is defined in HA's own config;
+       CLAUDE.md records what it looks like.
 
        No sun entity: MeteoSwiss encodes night by adding 100 to its
        icon ids, so the source already says which form it means. */
