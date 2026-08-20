@@ -1,8 +1,8 @@
 # Wall Dashboard
 
 A Home Assistant wall dashboard for a Raspberry Pi touchscreen: clock, bin
-reminders, the next three bus departures, weather with an 8-hour forecast, and
-light controls for the living room and bedroom.
+reminders, the next three bus departures, weather with a two-day forecast
+chart, and light controls for the living room and bedroom.
 
 Fixed at **1280 × 720**, no scrolling. Plain HTML, CSS and JavaScript — no build
 step, no framework, no dependencies. Fonts are self-hosted so it works with no
@@ -46,7 +46,7 @@ Home Assistant does the fetching because the browser cannot: the feed sends no
 rest:
   # 805300 is postcode 8053, zero-padded to six digits.
   - resource: https://app-prod-ws.meteoswiss-app.ch/v2/plzDetail?plz=805300
-    scan_interval: 3600
+    scan_interval: 900
     headers:
       User-Agent: pi-dashboard (Home Assistant REST sensor)
     sensor:
@@ -66,8 +66,10 @@ recorder:
       - sensor.meteoswiss_8053
 ```
 
-`scan_interval` is the overnight rate; an automation refreshes every 15 minutes
-between 07:00 and 23:00 by calling `homeassistant.update_entity` on the sensor.
+Every 15 minutes, around the clock. The endpoint's own headers invite a call
+every 120 seconds, so this is a very quiet client — quiet enough that varying
+the rate by time of day would save about 24 requests a day and cost an
+automation to maintain.
 
 The entity id must match [`js/entities.js`](js/entities.js). The endpoint is the
 one MeteoSwiss's phone app uses — undocumented, so it can change without notice;

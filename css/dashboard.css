@@ -346,20 +346,45 @@ html, body {
 .forecast-close svg { width: 28px; height: 28px; }
 .forecast-chart {
   flex: 1;
-  background: var(--card);
+  background: var(--ink);
   border-radius: 26px;
-  padding: 24px 26px;
   display: flex;
-  gap: 14px;
-  align-items: stretch;
+  overflow: hidden;
 }
-.fc-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.fc-temp { font-size: 34px; font-weight: 700; letter-spacing: -0.04em; }
-.fc-bar-slot { flex: 1; width: 100%; display: flex; align-items: flex-end; }
-.fc-bar { width: 100%; background: var(--ground); border-radius: 10px 10px 3px 3px; }
-.fc-bar.is-now { background: var(--ink); }
-.fc-col svg { width: 34px; height: 34px; flex: none; }
-.fc-hour { font-family: var(--mono); font-size: 14px; color: var(--muted); }
+
+/* ── Forecast chart ───────────────────────────────────────
+   Geometry comes from app.js; everything visual is here, so the
+   palette stays in one place. The chart sits on ink rather than
+   card: the rain whiskers are fine lines, and they need the
+   contrast to read from across the room. */
+.fc-svg { display: block; }
+
+.fc-band   { fill: var(--warm); opacity: 0.22; }
+.fc-line   { fill: none; stroke: var(--warm); stroke-width: 3; stroke-linecap: round; }
+.fc-bar    { fill: var(--cool); }
+.fc-whisker{ stroke: var(--cool); stroke-width: 1.5; }
+
+.fc-grid    { stroke: var(--on-ink); opacity: 0.16; stroke-width: 1; }
+.fc-divider { stroke: var(--on-ink); opacity: 0.34; stroke-width: 1.5; }
+.fc-base    { stroke: var(--on-ink); opacity: 0.55; stroke-width: 1.5; }
+.fc-now     { stroke: var(--warm); stroke-width: 2; }
+.fc-past    { fill: #000; opacity: 0.25; }
+
+.fc-axis, .fc-hour, .fc-day, .fc-unit {
+  font-family: var(--mono);
+  fill: var(--muted-dim);
+}
+.fc-axis, .fc-hour { font-size: 12px; }
+.fc-unit { font-size: 11px; }
+.fc-day  { font-size: 13px; letter-spacing: 1.6px; }
+.fc-axis-l { text-anchor: end; }
+.fc-hour   { text-anchor: middle; }
+
+/* The icons are authored for the cream card, so their ink parts
+   would vanish here. CSS wins over an SVG presentation attribute,
+   which lets the sprite stay copied verbatim from the source. */
+.fc-icon [fill="#16130f"] { fill: var(--on-ink); }
+
 .fc-empty {
   flex: 1;
   display: flex;

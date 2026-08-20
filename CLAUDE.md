@@ -137,6 +137,34 @@ arrives — a Zigbee group command takes a few hundred ms and the button would
 otherwise look dead. Predictions are stored as levels, not brightness values,
 because `_mid` resolves differently per room.
 
+## Forecast chart
+
+Tapping the weather card opens a structural copy of MeteoSwiss's own
+detail-view chart, in the dashboard's colours and with its icons: a temperature
+min/max band with the mean splined through it, precipitation columns with
+min/max whiskers along the baseline, and the 3-hourly symbols on their own row.
+The point of it is the precipitation spread — "probably dry, but it could be
+4 mm" is something a single bar cannot say.
+
+Geometry is computed in `app.js`; every colour is a class styled from the tokens
+in `dashboard.css`, so the palette stays in one place. The panel carries no
+padding — the drawing insets itself, so the SVG can be sized to the box exactly.
+
+- **The axis rule is theirs**, verified against Zurich, Langenthal and
+  Bellinzona: temperature always steps 5°, floored and ceiled to a multiple of
+  5, and the gridline count falls out of that; precipitation starts at 0,
+  shares those lines, and takes the smallest step that is a multiple of 2.
+  Nothing is hardcoded, so winter needs no seasonal case. The one departure is
+  that the range comes from the 48 hours on screen rather than their full nine
+  days — theirs scrolls, this panel does not, and a mild spell inside a cold
+  fortnight would otherwise draw as a flat ribbon.
+- **48 hours, an hour of it past.** That is what fits at their spacing on a
+  1280-wide panel that cannot scroll sideways.
+- **A redraw is skipped unless the data or the minute changed.** `renderAll`
+  runs every second for the clock; the chart has nothing new to say that often,
+  and rebuilding several hundred SVG nodes a second is not a thing to ask of a
+  Pi.
+
 ## Weather icons
 
 `weather-icons.svg` is the source of truth. Each `<symbol>` is authored in a

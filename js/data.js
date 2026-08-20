@@ -43,16 +43,51 @@
       low: 14,
       high: 23
     },
-    forecast: [
-      { hour: 21, temp: 18, condition: 'partlycloudy' },
-      { hour: 22, temp: 17, condition: 'cloudy' },
-      { hour: 23, temp: 16, condition: 'cloudy' },
-      { hour: 0,  temp: 15, condition: 'cloudy' },
-      { hour: 1,  temp: 15, condition: 'cloudy' },
-      { hour: 2,  temp: 14, condition: 'rainy' },
-      { hour: 3,  temp: 14, condition: 'rainy' },
-      { hour: 4,  temp: 15, condition: 'partlycloudy' }
-    ]
+    /* Demo-mode series: three days of hours, with a wet patch on the
+       second so the precipitation spread has something to show, and
+       doubt that widens with distance the way a real forecast's does.
+       Built once — the getter runs on every render, and a Pi should
+       not synthesise 72 hours of weather a second. */
+    forecastChart: (function () {
+      var built = null;
+      return function () {
+        if (built) return built;
+
+        var start = new Date(); start.setMinutes(0, 0, 0);
+        var hours = [], symbols = [], days = [];
+
+        for (var i = 0; i < 72; i++) {
+          var t = start.getTime() + i * 3600000;
+          var hour = new Date(t).getHours();
+          var warmth = 18 + 6 * Math.sin((i - 6) / 24 * 2 * Math.PI);
+          var doubt = Math.min(3, i / 24);
+          var wet = i > 30 && i < 44 ? (i % 5) * 0.4 : 0;
+          var night = hour < 7 || hour > 20;
+
+          hours.push({
+            t: t,
+            temp: Math.round(warmth * 10) / 10,
+            tempMin: Math.round((warmth - doubt) * 10) / 10,
+            tempMax: Math.round((warmth + doubt) * 10) / 10,
+            rain: wet,
+            rainMin: 0,
+            rainMax: wet ? wet + 1.5 : (i > 24 ? 0.6 : 0)
+          });
+
+          if (i % 3 === 0) {
+            symbols.push({
+              t: t,
+              condition: wet ? 'rainy' : (night ? 'clear-night' : 'partlycloudy'),
+              night: night
+            });
+          }
+          if (hour === 0) days.push({ t: t });
+        }
+
+        built = { hours: hours, symbols: symbols, days: days };
+        return built;
+      };
+    })()
   };
 
   /* Last values actually read from HA. Once real data has been
@@ -338,26 +373,14 @@
       }, mock.weather) || null;
     },
 
-    /* Eight hours starting from the current one. The symbols run at
-       three-hour spacing, so each hour takes the one covering it. */
-    getForecast: function () {
-      return cached('forecast', function () {
-        var s = series();
-        if (!s) return null;
-
-        var from = Date.now() - 3600000;
-        return s.hours.filter(function (h) { return h.t >= from; })
-          .slice(0, 8)
-          .map(function (h) {
-            var sym = symbolAt(s.symbols, h.t);
-            return {
-              hour: new Date(h.t).getHours(),
-              temp: Math.round(h.temp),
-              condition: sym.condition,
-              night: sym.night
-            };
-          });
-      }, mock.forecast) || [];
+    /* The whole series the chart draws: hourly temperature with its
+       min/max band, hourly precipitation with its min/max, the
+       3-hourly symbols, and where each day starts. app.js decides
+       how much of it fits on the card. */
+    getForecastChart: function () {
+      return cached('forecastChart', function () {
+        return series();
+      }, mock.forecastChart()) || null;
     },
 
     /* ── Actions ────────────────────────────────────────── */
