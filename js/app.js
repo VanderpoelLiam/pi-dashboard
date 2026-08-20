@@ -296,12 +296,7 @@
     setInterval(tick, 1000);
 
     if (global.HA) {
-      HA.onStatus(function (state) {
-        renderConnection(state);
-        // Forecasts are polled, not pushed, so they need kicking off
-        // on connect and again after any reconnect.
-        if (state === 'connected') Data.startForecastPolling();
-      });
+      HA.onStatus(renderConnection);
       HA.onUpdate(function () { if (Data.isLive) renderAll(); });
       HA.connect();
     }

@@ -30,7 +30,6 @@
   var status = 'idle';
   var updateHandlers = [];
   var statusHandlers = [];
-  var pending = Object.create(null);  // message id -> { resolve, reject }
 
   function setStatus(next, detail) {
     if (status === next) return;
@@ -48,23 +47,6 @@
     payload.id = id;
     socket.send(JSON.stringify(payload));
     return id;
-  }
-
-  /* Same as send, but resolves with the result HA sends back.
-     Needed for services that return data, like weather.get_forecasts. */
-  function request(payload) {
-    return new Promise(function (resolve, reject) {
-      var id = send(payload);
-      if (id === null) return reject(new Error('socket not open'));
-      pending[id] = { resolve: resolve, reject: reject };
-    });
-  }
-
-  function failPending(reason) {
-    Object.keys(pending).forEach(function (id) {
-      pending[id].reject(new Error(reason));
-      delete pending[id];
-    });
   }
 
   /* ── subscribe_entities delta handling ──────────────────
@@ -201,21 +183,13 @@
           break;
 
         case 'result':
-          var waiter = pending[msg.id];
-          if (waiter) {
-            delete pending[msg.id];
-            if (msg.success) waiter.resolve(msg.result);
-            else waiter.reject(new Error((msg.error && msg.error.message) || 'call failed'));
-          } else if (!msg.success) {
-            console.warn('[ha] call failed', msg.error);
-          }
+          if (!msg.success) console.warn('[ha] call failed', msg.error);
           break;
       }
     });
 
     socket.addEventListener('close', function () {
       clearPing();
-      failPending('socket closed');
       if (status === 'auth_failed') return;
       setStatus('disconnected');
       scheduleReconnect();
@@ -261,23 +235,6 @@
     runScript: function (scriptEntityId) {
       var name = scriptEntityId.replace(/^script\./, '');
       return global.HA.callService('script', name, {});
-    },
-
-    /* Forecasts are not part of entity state, so they have to be
-       pulled with a service call that returns a response.
-       Resolves with an array of forecast entries (possibly empty). */
-    getForecasts: function (entityId, type) {
-      return request({
-        type: 'call_service',
-        domain: 'weather',
-        service: 'get_forecasts',
-        service_data: { type: type },
-        target: { entity_id: entityId },
-        return_response: true
-      }).then(function (result) {
-        var byEntity = result && result.response && result.response[entityId];
-        return (byEntity && byEntity.forecast) || [];
-      });
     },
 
     onUpdate: function (fn) { updateHandlers.push(fn); },

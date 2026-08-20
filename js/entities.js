@@ -59,10 +59,15 @@
       }
     },
 
-    weather: 'weather.meteoswiss_at_8053_sma_weather_at_8053',
+    /* One REST sensor holds MeteoSwiss's whole response for postcode
+       8053 — current conditions, nine daily entries, and the hourly
+       series behind the forecast chart — in its attributes. Home
+       Assistant fetches it because the feed sends no CORS headers,
+       so the page cannot. See "Weather" in README.md.
 
-    // Drives the day/night weather icon variants.
-    sun: 'sun.sun'
+       No sun entity: MeteoSwiss encodes night by adding 100 to its
+       icon ids, so the source already says which form it means. */
+    meteoswiss: 'sensor.meteoswiss_8053'
   };
 
   /* Brightness -> level mapping.
@@ -117,7 +122,7 @@
   /* Every entity the dashboard subscribes to. */
   global.ALL_ENTITY_IDS = (function () {
     var e = global.ENTITIES;
-    var ids = [e.weather, e.sun];
+    var ids = [e.meteoswiss];
     Object.keys(e.lights).forEach(function (k) { ids.push(e.lights[k].entity); });
     e.departures.forEach(function (id) { ids.push(id); });
     Object.keys(e.waste).forEach(function (k) {

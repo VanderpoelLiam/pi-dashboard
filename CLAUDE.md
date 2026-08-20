@@ -74,10 +74,25 @@ Missing values render as em-dashes, with a chip in the bottom-left corner:
 | `AUTH FAILED` | Token rejected; not retrying, since that will not self-fix |
 | `NO CONFIG` | `js/config.js` missing or still has the placeholder token |
 
-**Forecasts are polled, not pushed.** They are not entity state, so they come
-from `weather.get_forecasts` — a service call that returns a response — every 15
-minutes and on every reconnect. `ha.js` has promise-based `request()` for this
-alongside fire-and-forget `callService()`.
+**All weather comes from one REST sensor**, `sensor.meteoswiss_8053`, whose
+attributes carry MeteoSwiss's whole response for the postcode: current
+conditions, nine daily entries, and the hourly series behind the chart —
+including the precipitation min/max the chart is built on. Home Assistant does
+the fetching because the feed sends no CORS headers and a browser is therefore
+not allowed to read it. See "Weather" in README.md for the config.
+
+Because it is ordinary entity state, the forecast arrives over the subscription
+like everything else. There is no polling timer and no service call that returns
+a response, which is why `ha.js` has only fire-and-forget `callService()`.
+
+`graph.temperature*1h` is hourly across all nine days. Precipitation is not: the
+first ~27 hours arrive as 10-minute slots — a nowcast, refreshed faster than the
+rest of the feed — and the remainder hourly. Six slots fold into an hour by
+mean, matching MeteoSwiss's own chart. In settled weather the two agree exactly;
+under fast convective rain they drift, because the nowcast has been updated more
+recently than the hourly series has. Parsing is memoised against the `graph`
+object, since `ha.js` swaps the whole array in on change and the render loop
+runs every second.
 
 **Departures read the raw timestamp sensors**, not the user's
 `bus_N_time`/`bus_N_countdown` template sensors. Those only re-evaluate when HA
@@ -137,10 +152,11 @@ All 15 Home Assistant conditions are covered. Two things to know:
 - **`windy-variant` has no artwork** and borrows the `windy` mark via `FALLBACK`.
   It is flagged in `icons.html`. If a sprite ever supplies it, delete the
   fallback entry.
-- **Night forms** are chosen from `sun.sun`'s `next_rising`/`next_setting` rather
-  than the bare above/below state, so forecast hours further out get the right
-  variant. HA already swaps `sunny` → `clear-night` itself, leaving
-  `partlycloudy` as the only condition needing a synthesised night form.
+- **Night forms come from the source, not from us.** MeteoSwiss encodes night by
+  adding 100 to its icon id, so every hour of the forecast already says which
+  form it means and the dashboard subscribes to no sun entity. `SYMBOL_CONDITIONS`
+  in `data.js` maps the ids onto Home Assistant's condition vocabulary, which is
+  what `icons.js` keys off.
 
 ## Design constraints
 
@@ -180,5 +196,5 @@ than the real instance:
 4. Serve the copy on a different port and drive it
 
 Worth reproducing in the mock: Zigbee latency on script calls (~400 ms), and the
-fact that **real HA sends exactly one result per message id** — an extra generic
-ack before a `get_forecasts` response will resolve the promise with empty data.
+weather sensor's attributes, which are where every weather value now lives —
+`mockha.py` in the demo folder serves a real captured response.

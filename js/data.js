@@ -114,26 +114,114 @@
     Data.onChange();
   }
 
-  /* ── Forecasts ──────────────────────────────────────────
-     Not entity state, so they arrive by service call rather than
-     over the subscription and have to be polled. MeteoSwiss data
-     does not move faster than this. */
-  var FORECAST_REFRESH_MS = 15 * 60 * 1000;
-  var forecasts = { daily: null, hourly: null };
-  var forecastTimer = null;
+  /* ── MeteoSwiss ─────────────────────────────────────────
+     The sensor's attributes carry MeteoSwiss's whole response, so
+     the forecast now arrives over the subscription like every other
+     value — no service call, no polling timer.
 
-  function refreshForecasts() {
-    if (!live()) return;
+     Ids are MeteoSwiss's own, mapped onto the condition names
+     icons.js keys off. Adding 100 is the source's night form, which
+     is why no sun entity is needed. */
+  var SYMBOL_CONDITIONS = {
+    'clear-night':     [101],
+    'cloudy':          [5, 35, 105, 126, 135],
+    'fog':             [27, 28, 127, 128],
+    'lightning':       [12, 36, 40, 41, 112, 136, 140, 141],
+    'lightning-rainy': [13, 23, 24, 25, 32, 38, 113, 123, 124, 125, 138],
+    'partlycloudy':    [2, 3, 4, 102, 103, 104],
+    'pouring':         [20, 120],
+    'rainy':           [6, 9, 14, 17, 29, 33, 106, 109, 114, 117, 129, 132, 133],
+    'snowy':           [8, 11, 16, 19, 22, 30, 34, 37, 42, 108, 111, 116, 119, 122, 130, 134, 137, 142],
+    'snowy-rainy':     [7, 10, 15, 18, 21, 31, 39, 107, 110, 115, 118, 121, 131, 139],
+    'sunny':           [1, 26]
+  };
 
-    HA.getForecasts(ENTITIES.weather, 'daily').then(function (list) {
-      forecasts.daily = list;
-      Data.onChange();
-    })['catch'](function (e) { console.warn('[data] daily forecast failed:', e.message); });
+  var SYMBOL_CONDITION = (function () {
+    var map = {};
+    Object.keys(SYMBOL_CONDITIONS).forEach(function (condition) {
+      SYMBOL_CONDITIONS[condition].forEach(function (id) { map[id] = condition; });
+    });
+    return map;
+  })();
 
-    HA.getForecasts(ENTITIES.weather, 'hourly').then(function (list) {
-      forecasts.hourly = list;
-      Data.onChange();
-    })['catch'](function (e) { console.warn('[data] hourly forecast failed:', e.message); });
+  function symbolOf(id) {
+    return { condition: SYMBOL_CONDITION[id] || 'cloudy', night: id >= 100 };
+  }
+
+  /* Temperature is hourly across the whole nine days. Precipitation
+     arrives in two pieces: roughly the first 27 hours as 10-minute
+     slots — a nowcast, refreshed faster than the rest of the feed —
+     and the remainder hourly. Six slots fold into an hour by mean,
+     which is how MeteoSwiss draws them on their own chart.
+
+     Reparsing 192 hours on every render would be careless on a Pi,
+     so the result is memoised against the graph object itself:
+     ha.js swaps the whole array in when a new value lands, so its
+     identity is a dependable cache key. */
+  var parsed = { from: null, series: null };
+
+  function fold(list, hour) {
+    var sum = 0, n = 0;
+    for (var i = hour * 6; i < hour * 6 + 6 && i < list.length; i++) {
+      if (typeof list[i] === 'number') { sum += list[i]; n++; }
+    }
+    return n ? sum / n : 0;
+  }
+
+  function series() {
+    var st = HA.get(ENTITIES.meteoswiss);
+    var g = st && st.attributes && st.attributes.graph;
+    if (!g || !g.temperatureMean1h || !g.start) return null;
+    if (parsed.from === g) return parsed.series;
+
+    var mean = g.temperatureMean1h, min = g.temperatureMin1h || [], max = g.temperatureMax1h || [];
+    var ten = g.precipitation10m || [], tenMin = g.precipitationMin10m || [], tenMax = g.precipitationMax10m || [];
+    var hr = g.precipitation1h || [], hrMin = g.precipitationMin1h || [], hrMax = g.precipitationMax1h || [];
+
+    var nowcastHours = Math.floor(ten.length / 6);
+    var hourlyFrom   = mean.length - hr.length;   // where the hourly block picks up
+
+    var hours = [];
+    for (var h = 0; h < mean.length; h++) {
+      if (typeof mean[h] !== 'number') continue;
+      var rain, rainMin, rainMax;
+      if (h < nowcastHours) {
+        rain = fold(ten, h); rainMin = fold(tenMin, h); rainMax = fold(tenMax, h);
+      } else {
+        var i = h - hourlyFrom;
+        rain = hr[i]; rainMin = hrMin[i]; rainMax = hrMax[i];
+      }
+      hours.push({
+        t: g.start + h * 3600000,
+        temp: mean[h], tempMin: min[h], tempMax: max[h],
+        rain: rain || 0, rainMin: rainMin || 0, rainMax: rainMax || 0
+      });
+    }
+    if (!hours.length) return null;
+
+    /* One id per three hours. Kept as its own list rather than
+       stamped onto each hour: the chart draws them on their own row,
+       at their own spacing. */
+    var symbols = (g.weatherIcon3h || []).map(function (id, k) {
+      var sym = symbolOf(id);
+      sym.t = g.start + k * 3 * 3600000;
+      return sym;
+    });
+
+    var days = hours.filter(function (h) { return new Date(h.t).getHours() === 0; })
+                    .map(function (h) { return { t: h.t }; });
+
+    parsed = { from: g, series: { hours: hours, symbols: symbols, days: days } };
+    return parsed.series;
+  }
+
+  /* Which 3-hourly symbol covers a given moment. */
+  function symbolAt(list, t) {
+    var found = null;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].t <= t) found = list[i]; else break;
+    }
+    return found || list[0] || { condition: 'cloudy', night: false };
   }
 
   var WARM_BELOW_KELVIN  = global.WARM_BELOW_KELVIN;
@@ -226,62 +314,50 @@
     },
 
     /* ── Weather ──────────────────────────────────────────
-       Condition and current temperature come off the entity, but
-       the daily high/low and the hourly series are not entity
-       state — they have to be pulled with weather.get_forecasts
-       and are refreshed on a timer (see refreshForecasts). */
+       All of it comes off the one sensor now: current conditions
+       from currentWeather, today's high and low from the first
+       daily entry. Night is the source's own, not ours — it encodes
+       it in the icon id. */
     getWeather: function () {
       return cached('weather', function () {
-        var st = HA.get(ENTITIES.weather);
-        if (!st) return null;
+        var st = HA.get(ENTITIES.meteoswiss);
+        var a = st && st.attributes;
+        var cur = a && a.currentWeather;
+        if (!cur) return null;
 
-        var today = forecasts.daily && forecasts.daily[0];
+        var sym = symbolOf(cur.icon);
+        var today = a.forecast && a.forecast[0];
         return {
-          condition: st.state,
-          conditionLabel: Icons.conditionLabel(st.state),
-          temperature: st.attributes.temperature,
-          low:  today ? Math.round(today.templow) : null,
-          high: today ? Math.round(today.temperature) : null,
-          night: Data.isNightAt(new Date())
+          condition: sym.condition,
+          conditionLabel: Icons.conditionLabel(sym.condition),
+          temperature: cur.temperature,
+          low:  today && today.temperatureMin != null ? Math.round(today.temperatureMin) : null,
+          high: today && today.temperatureMax != null ? Math.round(today.temperatureMax) : null,
+          night: sym.night
         };
       }, mock.weather) || null;
     },
 
-    /* Eight hours starting from the next forecast entry. */
+    /* Eight hours starting from the current one. The symbols run at
+       three-hour spacing, so each hour takes the one covering it. */
     getForecast: function () {
       return cached('forecast', function () {
-        if (!forecasts.hourly) return null;
+        var s = series();
+        if (!s) return null;
 
-        return forecasts.hourly.slice(0, 8).map(function (f) {
-          var when = new Date(f.datetime);
-          return {
-            hour: when.getHours(),
-            temp: Math.round(f.temperature),
-            condition: f.condition,
-            night: Data.isNightAt(when)
-          };
-        });
+        var from = Date.now() - 3600000;
+        return s.hours.filter(function (h) { return h.t >= from; })
+          .slice(0, 8)
+          .map(function (h) {
+            var sym = symbolAt(s.symbols, h.t);
+            return {
+              hour: new Date(h.t).getHours(),
+              temp: Math.round(h.temp),
+              condition: sym.condition,
+              night: sym.night
+            };
+          });
       }, mock.forecast) || [];
-    },
-
-    /* Night is derived from sun.sun's next rising/setting rather
-       than the bare above/below state, so forecast hours further
-       out get the right day or night icon too. */
-    isNightAt: function (when) {
-      var sun = HA.get && HA.get(ENTITIES.sun);
-      if (!sun) return false;
-
-      var t = when.getTime();
-      var rising  = Date.parse(sun.attributes.next_rising);
-      var setting = Date.parse(sun.attributes.next_setting);
-      if (isNaN(rising) || isNaN(setting)) return sun.state === 'below_horizon';
-
-      // Currently up: night runs from the coming sunset to the
-      // sunrise after it. Currently down: night runs until sunrise,
-      // and picks up again at the following sunset.
-      return sun.state === 'below_horizon'
-        ? (t < rising || t >= setting)
-        : (t >= setting && t < rising);
     },
 
     /* ── Actions ────────────────────────────────────────── */
@@ -334,14 +410,6 @@
       HA.runScript(ENTITIES.lights[room].scripts.temp);
       lastWarm[room] = !cur.warm;
       predict(room, { on: cur.on, level: cur.level, warm: !cur.warm });
-    },
-
-    /* Called once the socket is up, and again on every reconnect
-       so a dropped link does not leave the forecast frozen. */
-    startForecastPolling: function () {
-      refreshForecasts();
-      if (forecastTimer) return;
-      forecastTimer = setInterval(refreshForecasts, FORECAST_REFRESH_MS);
     },
 
     onChange: function () {}

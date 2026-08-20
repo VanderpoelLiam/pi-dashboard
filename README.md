@@ -33,6 +33,46 @@ window.HA_CONFIG = {
 Generate the token in Home Assistant under **profile → Security → Long-lived
 access tokens**. `js/config.js` is gitignored and must never be committed.
 
+## Weather
+
+Every weather value — current temperature, condition, today's high and low, and
+the forecast chart — comes from one Home Assistant REST sensor holding
+MeteoSwiss's forecast for postcode 8053.
+
+Home Assistant does the fetching because the browser cannot: the feed sends no
+`Access-Control-Allow-Origin` header, so a page is not allowed to read it.
+
+```yaml
+rest:
+  # 805300 is postcode 8053, zero-padded to six digits.
+  - resource: https://app-prod-ws.meteoswiss-app.ch/v2/plzDetail?plz=805300
+    scan_interval: 3600
+    headers:
+      User-Agent: pi-dashboard (Home Assistant REST sensor)
+    sensor:
+      - name: MeteoSwiss 8053
+        unique_id: meteoswiss_8053
+        unit_of_measurement: "°C"
+        value_template: "{{ value_json.currentWeather.temperature }}"
+        json_attributes:
+          - currentWeather
+          - forecast
+          - graph
+
+# ~18 KB of arrays per update, and nothing to look back at.
+recorder:
+  exclude:
+    entities:
+      - sensor.meteoswiss_8053
+```
+
+`scan_interval` is the overnight rate; an automation refreshes every 15 minutes
+between 07:00 and 23:00 by calling `homeassistant.update_entity` on the sensor.
+
+The entity id must match [`js/entities.js`](js/entities.js). The endpoint is the
+one MeteoSwiss's phone app uses — undocumented, so it can change without notice;
+if it ever dies, the fix is a different `resource:` line.
+
 ## What you see when something is wrong
 
 The dashboard never invents data. If it cannot reach Home Assistant it shows the
@@ -75,8 +115,9 @@ renamed in HA, that is the only file to touch.
 - **Lights are driven through HA scripts**, never `light.turn_on`. Which script a
   press calls depends on current brightness, mirroring a Hue dimmer blueprint so
   the wall panel and the physical remote step through the same three levels.
-- **Forecasts are polled**, not pushed — they are not entity state, so they come
-  from `weather.get_forecasts` every 15 minutes and on every reconnect.
+- **All weather comes from one REST sensor** — see [Weather](#weather) below.
+  It arrives over the subscription like every other value, so there is no
+  polling timer in the dashboard.
 - **`windy-variant` has no artwork** and borrows the `windy` mark.
 - **To update the weather icons**, replace `weather-icons.svg` and copy each
   `<symbol>`'s contents into the `SHAPES` table in `js/icons.js`. Check the
