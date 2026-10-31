@@ -14,6 +14,7 @@
     lights: {
       living: {
         entity: 'light.dresden_elektronik_conbee_ii_living_room',
+        lowMax: 90,
         scripts: {
           toggle: 'script.living_room_toggle',
           bright: 'script.living_room_bright',
@@ -24,6 +25,7 @@
       },
       bedroom: {
         entity: 'light.dresden_elektronik_conbee_ii_bedroom',
+        lowMax: 40,
         scripts: {
           toggle: 'script.bedroom_toggle',
           bright: 'script.bedroom_bright',
@@ -75,12 +77,11 @@
 
      These boundaries are lifted from the Hue dimmer blueprint so the
      wall dashboard and the physical remote agree on what "low",
-     "medium" and "high" mean: UP selects mid below 40 and bright
-     otherwise, DOWN selects mid above 200 and dim otherwise. Which
-     brightness mid actually lands on is a property of the scripts,
-     and differs per room — see SCRIPT_LEVEL below. */
+     "medium" and "high" mean: UP selects mid below the room's lowMax
+     and bright otherwise, DOWN selects mid above 200 and dim
+     otherwise. lowMax is per room, above in `lights`, because each
+     must fall between that room's dim and mid. */
   global.BRIGHTNESS_LEVELS = {
-    lowMax: 40,   // brightness < 40  -> level 1
     medMax: 200   // brightness < 200 -> level 2, else level 3
   };
 
@@ -97,25 +98,27 @@
 
      Deliberately levels rather than brightness values, because the
      scripts do not agree on a number across rooms:
-       dim     5%                     -> 13         both rooms
+       dim     5%                     -> 13         bedroom
+       dim     30% no-LED + 5% LED    -> ~64 mean   living room
        mid     raw 77, not a percent  -> 77         bedroom
-       mid     50% no-LED + 77% LED   -> ~142 mean  living room
+       mid     50% no-LED + 25% LED   -> ~115 mean  living room
        bright  100%                   -> 255        both rooms
      The levels are identical even though the values are not.
 
-     Constraint worth knowing if these scripts are ever retuned: mid
-     must land strictly between lowMax and medMax. If it crept to
-     >= 200, pressing DIMMER from mid would re-select mid and the
-     level would stick at 2. */
+     Constraint worth knowing if these scripts are ever retuned: dim
+     must land below the room's lowMax and mid strictly between lowMax
+     and medMax. If dim reached lowMax, BRIGHTER from dim would skip
+     mid and jump to bright. If mid crept to >= 200, pressing DIMMER
+     from mid would re-select mid and the level would stick at 2. */
   global.SCRIPT_LEVEL = {
     dim:    1,
     mid:    2,
     bright: 3
   };
 
-  global.brightnessToLevel = function (brightness) {
+  global.brightnessToLevel = function (brightness, lowMax) {
     var b = Number(brightness) || 0;
-    if (b < global.BRIGHTNESS_LEVELS.lowMax) return 1;
+    if (b < lowMax) return 1;
     if (b < global.BRIGHTNESS_LEVELS.medMax) return 2;
     return 3;
   };

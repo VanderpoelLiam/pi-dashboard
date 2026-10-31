@@ -118,18 +118,23 @@ wall panel and the physical remote stepping through the same three levels:
 
 | Current brightness | BRIGHTER | DIMMER |
 |---|---|---|
-| `< 40` | `_mid` | `_dim` |
-| `40 – 200` | `_bright` | `_dim` |
+| `< lowMax` | `_mid` | `_dim` |
+| `lowMax – 200` | `_bright` | `_dim` |
 | `> 200` | `_bright` | `_mid` |
+
+`lowMax` is per room in `entities.js`, and must match the blueprint's input in
+that room's dimmer automation: `40` for the bedroom, `90` for the living room.
 
 With the light off, brightness defaults to `0` going up and `255` going down, so
 both land on mid. That is deliberate, and matches the blueprint.
 
-**`_mid` must stay strictly between 40 and 200.** If it ever reached 200, a
+**`_dim` must stay below `lowMax`, and `_mid` strictly between `lowMax` and
+200.** If dim reached `lowMax`, BRIGHTER from dim would skip mid and jump to full
+brightness, and the glyph could not tell dim from mid. If mid reached 200, a
 DIMMER press from mid would re-select mid and the level would stick at 2. The
-bedroom script is `brightness: 77` — the raw 0–255 scale, not a percentage — and
-the living room averages ~142 across its group, so both sit well clear of either
-boundary.
+bedroom's dim is 5% and its mid `brightness: 77` — the raw 0–255 scale, not a
+percentage. The living room's dim averages ~64 across its group and its mid
+~115, which is why its `lowMax` sits at 90 between them.
 
 Warm versus cool is decided at **3000 K**, taken from the `warm_cool_toggle`
 scripts themselves (`2202` warm, `3600` cool). The living room splits its LED

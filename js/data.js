@@ -260,7 +260,6 @@
   }
 
   var WARM_BELOW_KELVIN  = global.WARM_BELOW_KELVIN;
-  var BLUEPRINT_LOW      = global.BRIGHTNESS_LEVELS.lowMax;
   var BLUEPRINT_HIGH     = global.BRIGHTNESS_LEVELS.medMax;
   var SCRIPT_LEVEL       = global.SCRIPT_LEVEL;
 
@@ -342,7 +341,7 @@
 
         return {
           on: on,
-          level: brightnessToLevel(st.attributes.brightness),
+          level: brightnessToLevel(st.attributes.brightness, cfg.lowMax),
           warm: warm
         };
       }, mock.lights[room]) || { on: false, level: 1, warm: lastWarm[room] };
@@ -395,7 +394,7 @@
     /* The bright/dim/mid scripts each jump to an absolute
        brightness, so which one to call depends on where the light
        currently sits. The branch points are the dimmer blueprint's
-       (< 40 going up, > 200 going down), which is what keeps the
+       (< lowMax going up, > 200 going down), which is what keeps the
        wall panel stepping 1->2->3 in step with the physical remote. */
     stepBrightness: function (room, delta) {
       if (!live()) {
@@ -415,7 +414,7 @@
       var b = isUnknown(raw) ? (up ? 0 : 255) : Number(raw);
 
       var step;
-      if (up ? b < BLUEPRINT_LOW : b > BLUEPRINT_HIGH) step = 'mid';
+      if (up ? b < cfg.lowMax : b > BLUEPRINT_HIGH) step = 'mid';
       else step = up ? 'bright' : 'dim';
 
       HA.runScript(cfg.scripts[step]);
