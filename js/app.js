@@ -444,6 +444,7 @@
     var now = new Date();
     renderClock(now);
     renderDepartures(now);
+    renderLights();   // a press's prediction can expire with no update to redraw it
   }
 
   function init() {

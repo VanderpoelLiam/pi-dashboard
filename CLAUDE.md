@@ -146,6 +146,13 @@ arrives — a Zigbee group command takes a few hundred ms and the button would
 otherwise look dead. Predictions are stored as levels, not brightness values,
 because `_mid` resolves differently per room.
 
+On/off and brightness presses go further, because `_mid` and `_dim` reach the
+living room's members in stages and HA drops a script that is already running. A
+press holds its prediction until the real state matches or 4 s pass, the next
+press works from what is on screen. A press with nothing in flight is sent at
+once; further taps merge and go out 150 ms after the last one, and at least 1 s
+after the previous send.
+
 ## Forecast chart
 
 Tapping the weather card opens a structural copy of MeteoSwiss's own

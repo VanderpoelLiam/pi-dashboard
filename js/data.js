@@ -110,9 +110,27 @@
      A Zigbee group command takes a few hundred ms to come back
      round over the socket. Without this the button looks dead
      on a touch panel, so a press renders its expected outcome
-     immediately and yields as soon as the real state lands. */
+     immediately and yields as soon as the real state lands.
+
+     On/off and brightness presses hold out for what they predicted,
+     because a script reaches its members in stages and a fast tap can
+     overlap the last one's updates. A press with nothing in flight is
+     sent at once; later taps merge, and go out once the tapping stops
+     and never within STEP_SETTLE_MS of the last send: HA
+     drops a script that is already running, and two overlapping runs
+     would leave a room's members on different steps. The same window
+     keeps the prediction up, so a run still landing cannot pull the
+     bars back to the level it was sent for. */
   var OPTIMISTIC_MS = 4000;
+  var STEP_SEND_MS = 150;
+  var STEP_SETTLE_MS = 1000;
   var optimistic = {};
+  var stepTimers = {};
+  var stepSent = {};
+
+  /* An off light reports no brightness, so this is what turning it
+     back on is predicted to show. */
+  var lastLevel = {};
 
   /* Default to cool when nothing is known, matching the scripts'
      own `| default(3600)`. */
@@ -124,20 +142,46 @@
     return st.state + '|' + st.attributes.brightness + '|' + st.attributes.color_temp_kelvin;
   }
 
-  function predict(room, view) {
+  function predict(room, view, hold) {
     optimistic[room] = {
       view: view,
       seen: fingerprint(ENTITIES.lights[room]),
+      hold: hold,
       until: Date.now() + OPTIMISTIC_MS
     };
     Data.onChange();
+  }
+
+  function queueSend(room, send) {
+    var settled = (stepSent[room] || 0) + STEP_SETTLE_MS - Date.now();
+    if (!stepTimers[room] && settled <= 0) {
+      stepSent[room] = Date.now();
+      send();
+      return;
+    }
+    clearTimeout(stepTimers[room]);
+    stepTimers[room] = setTimeout(function () {
+      stepTimers[room] = null;
+      stepSent[room] = Date.now();
+      send();
+    }, Math.max(STEP_SEND_MS, settled));
+  }
+
+  function reached(room, cfg, p) {
+    if (stepTimers[room]) return false;
+    if (Date.now() < (stepSent[room] || 0) + STEP_SETTLE_MS) return false;
+    var st = HA.get(cfg.entity);
+    if (!st || st.state !== (p.view.on ? 'on' : 'off')) return false;
+    return p.hold !== 'level' ||
+      brightnessToLevel(st.attributes.brightness, cfg.lowMax) === p.view.level;
   }
 
   function optimisticView(room, cfg) {
     var p = optimistic[room];
     if (!p) return null;
     // Stop guessing once the real state moves, or the wait runs out.
-    if (Date.now() > p.until || fingerprint(cfg) !== p.seen) {
+    var landed = p.hold ? reached(room, cfg, p) : fingerprint(cfg) !== p.seen;
+    if (Date.now() > p.until || landed) {
       delete optimistic[room];
       return null;
     }
@@ -339,11 +383,10 @@
         // known setting rather than flipping the label arbitrarily.
         if (!isUnknown(kelvin)) lastWarm[room] = warm;
 
-        return {
-          on: on,
-          level: brightnessToLevel(st.attributes.brightness, cfg.lowMax),
-          warm: warm
-        };
+        var level = brightnessToLevel(st.attributes.brightness, cfg.lowMax);
+        if (on) lastLevel[room] = level;
+
+        return { on: on, level: level, warm: warm };
       }, mock.lights[room]) || { on: false, level: 1, warm: lastWarm[room] };
     },
 
@@ -386,16 +429,25 @@
     toggleLight: function (room) {
       if (!live()) return mockAction(room, function (l) { l.on = !l.on; });
 
+      var cfg = ENTITIES.lights[room];
       var cur = Data.getLight(room);
-      HA.runScript(ENTITIES.lights[room].scripts.toggle);
-      predict(room, { on: !cur.on, level: cur.level, warm: cur.warm });
+      var on = !cur.on;
+
+      // Compares against the real state when it fires, since this press
+      // may be cancelling a step that never reached the light.
+      queueSend(room, function () {
+        if ((HA.stateOf(cfg.entity) === 'on') !== on) HA.runScript(cfg.scripts.toggle);
+      });
+      predict(room, { on: on, level: lastLevel[room] || cur.level, warm: cur.warm }, 'power');
     },
 
     /* The bright/dim/mid scripts each jump to an absolute
        brightness, so which one to call depends on where the light
        currently sits. The branch points are the dimmer blueprint's
        (< lowMax going up, > 200 going down), which is what keeps the
-       wall panel stepping 1->2->3 in step with the physical remote. */
+       wall panel stepping 1->2->3 in step with the physical remote.
+       While a press is still landing, the next one steps from the level
+       on screen, since the reported brightness has not caught up. */
     stepBrightness: function (room, delta) {
       if (!live()) {
         return mockAction(room, function (l) {
@@ -413,16 +465,27 @@
       // that lands both on the middle step, which is deliberate.
       var b = isUnknown(raw) ? (up ? 0 : 255) : Number(raw);
 
+      var pending = optimisticView(room, cfg);
       var step;
-      if (up ? b < cfg.lowMax : b > BLUEPRINT_HIGH) step = 'mid';
-      else step = up ? 'bright' : 'dim';
+      if (pending && !pending.on) {
+        step = 'mid';
+      } else if (pending) {
+        if (up) step = pending.level === 1 ? 'mid' : 'bright';
+        else step = pending.level === 3 ? 'mid' : 'dim';
+      } else if (up ? b < cfg.lowMax : b > BLUEPRINT_HIGH) {
+        step = 'mid';
+      } else {
+        step = up ? 'bright' : 'dim';
+      }
 
-      HA.runScript(cfg.scripts[step]);
+      queueSend(room, function () { HA.runScript(cfg.scripts[step]); });
+
       predict(room, {
         on: true,
         level: SCRIPT_LEVEL[step],
         warm: Data.getLight(room).warm
-      });
+      }, 'level');
+      lastLevel[room] = SCRIPT_LEVEL[step];
     },
 
     toggleColorTemp: function (room) {
