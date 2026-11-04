@@ -144,16 +144,23 @@
     var l = Data.getLight(room);
 
     card.classList.toggle('is-off', !l.on);
-    card.querySelector('[data-glyph]').innerHTML = Icons.levelGlyph(l.on, l.level);
+    card.classList.toggle('is-held', !!l.held);
+    card.querySelector('[data-glyph]').innerHTML = Icons.levelGlyph(l.on, l.level, l.held);
 
     var disc = card.querySelector('[data-temp-disc]');
-    disc.style.background = l.on ? (l.warm ? '#e08a3c' : '#9ab6cc') : '#c3b8a6';
-    card.querySelector('[data-temp-label]').textContent = l.warm ? 'WARM' : 'COOL';
+    if (disc) {
+      disc.style.background = l.on ? (l.warm ? '#e08a3c' : '#9ab6cc') : '#c3b8a6';
+      card.querySelector('[data-temp-label]').textContent = l.warm ? 'WARM' : 'COOL';
+    }
+
+    var mark = card.querySelector('[data-hall-state]');
+    if (mark) mark.innerHTML = l.held ? Icons.lockClosed : (l.on ? Icons.motion : '');
   }
 
   function renderLights() {
     renderLight('living');
     renderLight('bedroom');
+    renderLight('hallway');
   }
 
   /* ── Weather ────────────────────────────────────────── */
@@ -393,6 +400,7 @@
           case 'brightness_up':     Data.stepBrightness(room, 1); break;
           case 'brightness_down':   Data.stepBrightness(room, -1); break;
           case 'color_temp_toggle': Data.toggleColorTemp(room); break;
+          case 'hold':              Data.toggleHold(room); break;
         }
       });
     });

@@ -29,7 +29,8 @@
   var mock = {
     lights: {
       living:  { on: true, level: 3, warm: true },
-      bedroom: { on: true, level: 2, warm: false }
+      bedroom: { on: true, level: 2, warm: false },
+      hallway: { on: true, level: 2, warm: false, held: true }
     },
     departures: [inMinutes(8), inMinutes(17), inMinutes(30)],
     wasteChips: [
@@ -139,7 +140,8 @@
   function fingerprint(cfg) {
     var st = HA.get(cfg.entity);
     if (!st) return 'none';
-    return st.state + '|' + st.attributes.brightness + '|' + st.attributes.color_temp_kelvin;
+    return st.state + '|' + st.attributes.brightness + '|' + st.attributes.color_temp_kelvin +
+      '|' + (cfg.hold ? HA.stateOf(cfg.hold) : '');
   }
 
   function predict(room, view, hold) {
@@ -172,6 +174,7 @@
     if (Date.now() < (stepSent[room] || 0) + STEP_SETTLE_MS) return false;
     var st = HA.get(cfg.entity);
     if (!st || st.state !== (p.view.on ? 'on' : 'off')) return false;
+    if (cfg.hold && (HA.stateOf(cfg.hold) === 'on') !== p.view.held) return false;
     return p.hold !== 'level' ||
       brightnessToLevel(st.attributes.brightness, cfg.lowMax) === p.view.level;
   }
@@ -386,8 +389,10 @@
         var level = brightnessToLevel(st.attributes.brightness, cfg.lowMax);
         if (on) lastLevel[room] = level;
 
-        return { on: on, level: level, warm: warm };
-      }, mock.lights[room]) || { on: false, level: 1, warm: lastWarm[room] };
+        var held = !!cfg.hold && HA.stateOf(cfg.hold) === 'on';
+
+        return { on: on, level: level, warm: warm, held: held };
+      }, mock.lights[room]) || { on: false, level: 1, warm: lastWarm[room], held: false };
     },
 
     /* ── Weather ──────────────────────────────────────────
@@ -426,6 +431,29 @@
     },
 
     /* ── Actions ────────────────────────────────────────── */
+    /* Hallway only: keep it on, or release it to motion. Releasing
+       leaves the light on; the motion automation turns it off once
+       nobody is there, so the prediction keeps `on` as it is. */
+    toggleHold: function (room) {
+      if (!live()) {
+        return mockAction(room, function (l) { l.held = !l.held; if (l.held) l.on = true; });
+      }
+
+      var cfg = ENTITIES.lights[room];
+      var cur = Data.getLight(room);
+      var held = !cur.held;
+
+      queueSend(room, function () {
+        if ((HA.stateOf(cfg.hold) === 'on') !== held) HA.runScript(cfg.scripts.keep);
+      });
+      predict(room, {
+        on: held || cur.on,
+        level: held && !cur.on ? SCRIPT_LEVEL.mid : cur.level,
+        warm: cur.warm,
+        held: held
+      }, 'hold');
+    },
+
     toggleLight: function (room) {
       if (!live()) return mockAction(room, function (l) { l.on = !l.on; });
 
@@ -438,7 +466,7 @@
       queueSend(room, function () {
         if ((HA.stateOf(cfg.entity) === 'on') !== on) HA.runScript(cfg.scripts.toggle);
       });
-      predict(room, { on: on, level: lastLevel[room] || cur.level, warm: cur.warm }, 'power');
+      predict(room, { on: on, level: lastLevel[room] || cur.level, warm: cur.warm, held: cur.held }, 'power');
     },
 
     /* The bright/dim/mid scripts each jump to an absolute
@@ -483,7 +511,8 @@
       predict(room, {
         on: true,
         level: SCRIPT_LEVEL[step],
-        warm: Data.getLight(room).warm
+        warm: Data.getLight(room).warm,
+        held: !!cfg.hold
       }, 'level');
       lastLevel[room] = SCRIPT_LEVEL[step];
     },

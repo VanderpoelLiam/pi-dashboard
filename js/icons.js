@@ -22,30 +22,45 @@
     { x: 50, y: 12, w: 14, h: 46 }
   ];
 
-  function levelGlyph(on, level) {
+  /* `dark` draws for an ink card: the hallway while it is kept on. */
+  function levelGlyph(on, level, dark) {
     var body = BARS.map(function (b, i) {
       var base = 'x="' + b.x + '" y="' + b.y + '" width="' + b.w +
                  '" height="' + b.h + '" rx="3"';
       if (on && i < level) {
-        return '<rect ' + base + ' fill="' + INK + '" />';
+        return '<rect ' + base + ' fill="' + (dark ? '#f7efe4' : INK) + '" />';
       }
-      var stroke = on ? '#cdc2b0' : '#b6ab99';
+      var stroke = dark ? '#6f6559' : (on ? '#cdc2b0' : '#b6ab99');
       return '<rect ' + base + ' fill="none" stroke="' + stroke + '" stroke-width="2.5" />';
     }).join('');
     return svg('0 0 72 72', body);
   }
 
-  /* ── Light card buttons ─────────────────────────────── */
+  /* ── Light card buttons ───────────────────────────────
+     currentColor, so the hallway's dark card can draw them in
+     cream; every other card sets ink. */
   var brighter = svg('0 0 24 24',
-    '<circle cx="12" cy="12" r="4.5" stroke="' + INK + '" stroke-width="1.5" fill="none" />' +
+    '<circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.5" fill="none" />' +
     '<path d="M12 2.5v3.2M12 18.3v3.2M2.5 12h3.2M18.3 12h3.2M5.3 5.3l2.3 2.3' +
     'M16.4 16.4l2.3 2.3M18.7 5.3l-2.3 2.3M7.6 16.4l-2.3 2.3" ' +
-    'stroke="' + INK + '" stroke-width="1.5" stroke-linecap="round" fill="none" />');
+    'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" />');
 
   var dimmer = svg('0 0 24 24',
-    '<path d="M12 4.5a7.5 7.5 0 100 15 7.5 7.5 0 000-15z" stroke="' + INK +
-    '" stroke-width="1.5" fill="none" />' +
-    '<path d="M12 4.5a7.5 7.5 0 010 15z" fill="' + INK + '" />');
+    '<path d="M12 4.5a7.5 7.5 0 100 15 7.5 7.5 0 000-15z" stroke="currentColor" ' +
+    'stroke-width="1.5" fill="none" />' +
+    '<path d="M12 4.5a7.5 7.5 0 010 15z" fill="currentColor" />');
+
+  /* Hallway state marks: closed lock while kept on, motion waves
+     while motion has it lit. */
+  var lockClosed = svg('0 0 24 24',
+    '<rect x="5" y="11" width="14" height="10" rx="2" fill="currentColor" ' +
+    'stroke="currentColor" stroke-width="1.6" />' +
+    '<path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.6" fill="none" />');
+
+  var motion = svg('0 0 24 24',
+    '<circle cx="6" cy="12" r="2" fill="currentColor" />' +
+    '<path d="M11 7.5a6.5 6.5 0 010 9M15 4.5a10.5 10.5 0 010 15" stroke="currentColor" ' +
+    'stroke-width="1.6" fill="none" stroke-linecap="round" />');
 
   var close = svg('0 0 24 24',
     '<path d="M6 6l12 12M18 6L6 18" stroke="#f7efe4" stroke-width="1.8" stroke-linecap="round" />');
@@ -162,6 +177,8 @@
     levelGlyph: levelGlyph,
     brighter: brighter,
     dimmer: dimmer,
+    lockClosed: lockClosed,
+    motion: motion,
     close: close,
     weatherLarge: weatherLarge,
     weatherSmall: weatherSmall,

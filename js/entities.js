@@ -33,6 +33,22 @@
           dim:    'script.bedroom_dim',
           temp:   'script.bedroom_warm_cool_toggle'
         }
+      },
+      /* Motion runs the hallway. Bright and Dim lock it at a level,
+         and keep locks it where it is, or at mid from off; keep
+         again releases it, and the motion automation turns it off
+         once the hallway is empty. `hold` is that lock, which the
+         card shows by turning dark. */
+      hallway: {
+        entity: 'light.hallway',
+        lowMax: 40,
+        hold: 'input_boolean.hallway_locked',
+        scripts: {
+          bright: 'script.hallway_bright',
+          mid:    'script.hallway_mid',
+          dim:    'script.hallway_dim',
+          keep:   'script.hallway_keep'
+        }
       }
     },
 
@@ -127,7 +143,10 @@
   global.ALL_ENTITY_IDS = (function () {
     var e = global.ENTITIES;
     var ids = [e.meteoswiss];
-    Object.keys(e.lights).forEach(function (k) { ids.push(e.lights[k].entity); });
+    Object.keys(e.lights).forEach(function (k) {
+      ids.push(e.lights[k].entity);
+      if (e.lights[k].hold) ids.push(e.lights[k].hold);
+    });
     e.departures.forEach(function (id) { ids.push(id); });
     Object.keys(e.waste).forEach(function (k) {
       ids.push(e.waste[k].days, e.waste[k].warn);

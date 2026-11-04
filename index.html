@@ -61,6 +61,7 @@
   </section>
 
   <!-- ── Lights ──────────────────────────────────────────── -->
+  <div class="lights-row">
   <section class="card light-card" id="light-living" data-room="living">
     <div class="light-header">
       <div>
@@ -112,6 +113,21 @@
       </div>
     </div>
   </section>
+
+  <!-- Tap the bars to keep it on or release it; dark while kept on. -->
+  <section class="card light-card hall-card" id="light-hallway" data-room="hallway">
+    <div class="hall-main" data-action="hold" role="button" tabindex="0"
+         aria-label="Keep the hallway on, or release it to motion">
+      <div class="mono-label light-room">HALLWAY</div>
+      <div class="hall-glyph" data-glyph></div>
+      <div class="hall-state" data-hall-state></div>
+    </div>
+    <div class="hall-side">
+      <div class="light-btn" data-action="brightness_up" aria-label="Bright"><span data-icon="brighter"></span></div>
+      <div class="light-btn" data-action="brightness_down" aria-label="Dim"><span data-icon="dimmer"></span></div>
+    </div>
+  </section>
+  </div>
 
   <!-- ── Weather ─────────────────────────────────────────── -->
   <section class="card weather" id="weather-card">

@@ -204,16 +204,21 @@ html, body {
 .dep-dim .dep-later-countdown { color: var(--muted-dim); }
 
 /* ── Light cards ──────────────────────────────────────── */
-.light-card {
+.lights-row {
+  grid-column: 1 / span 2;
   grid-row: 3;
+  display: grid;
+  grid-template-columns: 1fr 1fr 220px;
+  gap: 14px;
+  min-height: 0;
+}
+.light-card {
   padding: 18px 22px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   border-radius: 26px;
 }
-#light-living  { grid-column: 1; }
-#light-bedroom { grid-column: 2; }
 .light-card.is-off { background: var(--card-off); }
 
 .light-header { display: flex; justify-content: space-between; align-items: center; }
@@ -247,6 +252,7 @@ html, body {
   align-items: center;
   justify-content: center;
   gap: 3px;
+  color: var(--ink);
 }
 .light-btn-temp { gap: 4px; }
 .light-btn svg { width: 23px; height: 23px; display: block; }
@@ -258,9 +264,31 @@ html, body {
 }
 .temp-disc { width: 23px; height: 23px; border-radius: 50%; background: var(--warm); }
 
+/* Hallway: the bars are the keep/release button, Bright and Dim sit
+   in a column beside them, and the whole card goes ink while kept on. */
+.hall-card { flex-direction: row; justify-content: flex-start; gap: 10px; padding: 14px; }
+.hall-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4px 6px;
+  border-radius: 18px;
+}
+.hall-glyph svg { width: 92px; height: 92px; display: block; }
+.hall-state { height: 26px; color: var(--ink); }
+.hall-state svg { width: 26px; height: 26px; display: block; }
+.hall-side { width: 66px; display: flex; flex-direction: column; gap: 10px; }
+.hall-side .light-btn { flex: 1; height: auto; }
+.hall-card.is-held { background: var(--ink); }
+.hall-card.is-held .light-room { color: var(--on-ground); }
+.hall-card.is-held .hall-state { color: var(--on-ink); }
+.hall-card.is-held .light-btn { border-color: var(--muted); color: var(--on-ink); }
+
 /* Touch feedback — 120ms, within the <=150ms budget the spec allows. */
-.light-btn, .toggle, .weather, .forecast-close { transition: opacity 120ms ease; }
-.light-btn:active, .toggle:active, .weather:active, .forecast-close:active { opacity: 0.55; }
+.light-btn, .toggle, .weather, .forecast-close, .hall-main { transition: opacity 120ms ease; }
+.light-btn:active, .toggle:active, .weather:active, .forecast-close:active, .hall-main:active { opacity: 0.55; }
 
 /* ── Weather ──────────────────────────────────────────── */
 .weather {

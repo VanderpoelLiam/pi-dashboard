@@ -136,6 +136,13 @@ bedroom's dim is 5% and its mid `brightness: 77` — the raw 0–255 scale, not 
 percentage. The living room's dim averages ~64 across its group and its mid
 ~115, which is why its `lowMax` sits at 90 between them.
 
+**The hallway is motion's, unless it is kept on.** Its card has no on/off switch:
+tapping the bars runs `script.hallway_keep`, which locks the light where it is (mid
+from off), and tapping again releases it. Released, the light stays on until the
+motion automation sees the hallway empty. Bright and Dim also lock it. The lock is
+`input_boolean.hallway_locked`, which a one-hour timer and any turn-off clear; the
+card goes ink while it is on, and shows no timer.
+
 Warm versus cool is decided at **3000 K**, taken from the `warm_cool_toggle`
 scripts themselves (`2202` warm, `3600` cool). The living room splits its LED
 controller onto 2000/6500, but the group mean still lands either side of 3000, so
