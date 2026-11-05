@@ -148,10 +148,7 @@
     card.querySelector('[data-glyph]').innerHTML = Icons.levelGlyph(l.on, l.level, l.held);
 
     var disc = card.querySelector('[data-temp-disc]');
-    if (disc) {
-      disc.style.background = l.on ? (l.warm ? '#e08a3c' : '#9ab6cc') : '#c3b8a6';
-      card.querySelector('[data-temp-label]').textContent = l.warm ? 'WARM' : 'COOL';
-    }
+    if (disc) disc.style.background = l.on ? (l.warm ? '#e08a3c' : '#9ab6cc') : '#c3b8a6';
 
     var mark = card.querySelector('[data-hall-state]');
     if (mark) mark.innerHTML = l.held ? Icons.lockClosed : (l.on ? Icons.motion : '');

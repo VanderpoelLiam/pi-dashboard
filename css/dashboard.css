@@ -212,62 +212,17 @@ html, body {
   gap: 14px;
   min-height: 0;
 }
+/* Every light card has the same shape: the room name and bars are one
+   big tap target on the left, the buttons a column on the right. A room
+   taps on and off; the hallway taps between motion and kept on. */
 .light-card {
-  padding: 18px 22px;
+  padding: 14px;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  gap: 10px;
   border-radius: 26px;
 }
 .light-card.is-off { background: var(--card-off); }
-
-.light-header { display: flex; justify-content: space-between; align-items: center; }
-.light-glyph { height: 66px; display: flex; align-items: center; margin-top: 4px; }
-.light-glyph svg { width: 62px; height: 62px; }
-
-.toggle {
-  width: 74px;
-  height: 42px;
-  border-radius: 21px;
-  display: flex;
-  align-items: center;
-  padding: 3px;
-  flex: none;
-  border: 1.5px solid var(--ink);
-  background: var(--ink);
-  justify-content: flex-end;
-}
-.toggle-knob { width: 35px; height: 35px; border-radius: 50%; background: var(--on-ink); }
-.light-card.is-off .toggle { background: transparent; justify-content: flex-start; }
-.light-card.is-off .toggle-knob { background: var(--hairline-off); }
-
-.light-buttons { display: flex; gap: 10px; }
-.light-btn {
-  flex: 1;
-  height: 62px;
-  border-radius: 16px;
-  border: 1.5px solid var(--ink);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  color: var(--ink);
-}
-.light-btn-temp { gap: 4px; }
-.light-btn svg { width: 23px; height: 23px; display: block; }
-.mono-btn-label {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  color: var(--ink);
-}
-.temp-disc { width: 23px; height: 23px; border-radius: 50%; background: var(--warm); }
-
-/* Hallway: the bars are the keep/release button, Bright and Dim sit
-   in a column beside them, and the whole card goes ink while kept on. */
-.hall-card { flex-direction: row; justify-content: flex-start; gap: 10px; padding: 14px; }
-.hall-main {
+.light-main {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -276,19 +231,33 @@ html, body {
   padding: 4px 6px;
   border-radius: 18px;
 }
-.hall-glyph svg { width: 92px; height: 92px; display: block; }
+.light-glyph svg { width: 92px; height: 92px; display: block; }
+.light-side { width: 128px; flex: none; display: flex; flex-direction: column; gap: 10px; }
+.light-btn {
+  flex: 1;
+  border-radius: 16px;
+  border: 1.5px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+.light-btn svg { width: 23px; height: 23px; display: block; }
+.temp-disc { width: 23px; height: 23px; border-radius: 50%; background: var(--warm); }
+
+/* Hallway: no warm/cool, so a narrower column, plus a mark for how
+   it is lit; the whole card goes ink while kept on. */
+.hall-card .light-side { width: 66px; }
 .hall-state { height: 26px; color: var(--ink); }
 .hall-state svg { width: 26px; height: 26px; display: block; }
-.hall-side { width: 66px; display: flex; flex-direction: column; gap: 10px; }
-.hall-side .light-btn { flex: 1; height: auto; }
 .hall-card.is-held { background: var(--ink); }
 .hall-card.is-held .light-room { color: var(--on-ground); }
 .hall-card.is-held .hall-state { color: var(--on-ink); }
 .hall-card.is-held .light-btn { border-color: var(--muted); color: var(--on-ink); }
 
 /* Touch feedback — 120ms, within the <=150ms budget the spec allows. */
-.light-btn, .toggle, .weather, .forecast-close, .hall-main { transition: opacity 120ms ease; }
-.light-btn:active, .toggle:active, .weather:active, .forecast-close:active, .hall-main:active { opacity: 0.55; }
+.light-btn, .light-main, .weather, .forecast-close { transition: opacity 120ms ease; }
+.light-btn:active, .light-main:active, .weather:active, .forecast-close:active { opacity: 0.55; }
 
 /* ── Weather ──────────────────────────────────────────── */
 .weather {

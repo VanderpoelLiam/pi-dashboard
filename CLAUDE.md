@@ -136,6 +136,11 @@ bedroom's dim is 5% and its mid `brightness: 77` — the raw 0–255 scale, not 
 percentage. The living room's dim averages ~64 across its group and its mid
 ~115, which is why its `lowMax` sits at 90 between them.
 
+**Every light card works the same way.** The room name and bars are one big tap
+target; Bright, Dim and (in the rooms) the warm/cool disc sit in a column beside
+them, with no text labels. In the living room and bedroom that tap turns the light
+on or off.
+
 **The hallway is motion's, unless it is kept on.** Its card has no on/off switch:
 tapping the bars runs `script.hallway_keep`, which locks the light where it is (mid
 from off), and tapping again releases it. Released, the light stays on until the

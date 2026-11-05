@@ -63,66 +63,40 @@
   <!-- ── Lights ──────────────────────────────────────────── -->
   <div class="lights-row">
   <section class="card light-card" id="light-living" data-room="living">
-    <div class="light-header">
-      <div>
-        <div class="mono-label light-room">LIVING ROOM</div>
-        <div class="light-glyph" data-glyph></div>
-      </div>
-      <div class="toggle" data-action="toggle" role="switch" tabindex="0">
-        <div class="toggle-knob"></div>
-      </div>
+    <div class="light-main" data-action="toggle" role="button" tabindex="0"
+         aria-label="Turn the living room light on or off">
+      <div class="mono-label light-room">LIVING ROOM</div>
+      <div class="light-glyph" data-glyph></div>
     </div>
-    <div class="light-buttons">
-      <div class="light-btn" data-action="brightness_down">
-        <span data-icon="dimmer"></span>
-        <div class="mono-btn-label">DIMMER</div>
-      </div>
-      <div class="light-btn" data-action="brightness_up">
-        <span data-icon="brighter"></span>
-        <div class="mono-btn-label">BRIGHTER</div>
-      </div>
-      <div class="light-btn light-btn-temp" data-action="color_temp_toggle">
-        <div class="temp-disc" data-temp-disc></div>
-        <div class="mono-btn-label" data-temp-label>WARM</div>
-      </div>
+    <div class="light-side">
+      <div class="light-btn" data-action="brightness_up" aria-label="Bright"><span data-icon="brighter"></span></div>
+      <div class="light-btn" data-action="brightness_down" aria-label="Dim"><span data-icon="dimmer"></span></div>
+      <div class="light-btn" data-action="color_temp_toggle" aria-label="Warm or cool"><div class="temp-disc" data-temp-disc></div></div>
     </div>
   </section>
 
   <section class="card light-card" id="light-bedroom" data-room="bedroom">
-    <div class="light-header">
-      <div>
-        <div class="mono-label light-room">BEDROOM</div>
-        <div class="light-glyph" data-glyph></div>
-      </div>
-      <div class="toggle" data-action="toggle" role="switch" tabindex="0">
-        <div class="toggle-knob"></div>
-      </div>
+    <div class="light-main" data-action="toggle" role="button" tabindex="0"
+         aria-label="Turn the bedroom light on or off">
+      <div class="mono-label light-room">BEDROOM</div>
+      <div class="light-glyph" data-glyph></div>
     </div>
-    <div class="light-buttons">
-      <div class="light-btn" data-action="brightness_down">
-        <span data-icon="dimmer"></span>
-        <div class="mono-btn-label">DIMMER</div>
-      </div>
-      <div class="light-btn" data-action="brightness_up">
-        <span data-icon="brighter"></span>
-        <div class="mono-btn-label">BRIGHTER</div>
-      </div>
-      <div class="light-btn light-btn-temp" data-action="color_temp_toggle">
-        <div class="temp-disc" data-temp-disc></div>
-        <div class="mono-btn-label" data-temp-label>COOL</div>
-      </div>
+    <div class="light-side">
+      <div class="light-btn" data-action="brightness_up" aria-label="Bright"><span data-icon="brighter"></span></div>
+      <div class="light-btn" data-action="brightness_down" aria-label="Dim"><span data-icon="dimmer"></span></div>
+      <div class="light-btn" data-action="color_temp_toggle" aria-label="Warm or cool"><div class="temp-disc" data-temp-disc></div></div>
     </div>
   </section>
 
   <!-- Tap the bars to keep it on or release it; dark while kept on. -->
   <section class="card light-card hall-card" id="light-hallway" data-room="hallway">
-    <div class="hall-main" data-action="hold" role="button" tabindex="0"
+    <div class="light-main" data-action="hold" role="button" tabindex="0"
          aria-label="Keep the hallway on, or release it to motion">
       <div class="mono-label light-room">HALLWAY</div>
-      <div class="hall-glyph" data-glyph></div>
+      <div class="light-glyph" data-glyph></div>
       <div class="hall-state" data-hall-state></div>
     </div>
-    <div class="hall-side">
+    <div class="light-side">
       <div class="light-btn" data-action="brightness_up" aria-label="Bright"><span data-icon="brighter"></span></div>
       <div class="light-btn" data-action="brightness_down" aria-label="Dim"><span data-icon="dimmer"></span></div>
     </div>
